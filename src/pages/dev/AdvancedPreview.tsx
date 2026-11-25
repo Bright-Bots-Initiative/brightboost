@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { SpecialtyExperience } from "@/components/specialty/SpecialtyExperience";
 import BioTrailGame from "@/components/games/biotrail/BioTrailGame";
+import QubitCoveGame from "@/components/games/qubitCove/QubitCoveGame";
 import SparBotsGame from "@/components/games/sparbots/SparBotsGame";
 import type { Specialty } from "@/lib/specialty";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,11 @@ export default function AdvancedPreview() {
       <header className="max-w-6xl mx-auto flex flex-wrap gap-3 justify-between items-center py-4 border-b">
         <strong>BrightBoost · {t("specialty.previewMode")}</strong>
         <div className="flex gap-2 items-center">
-          <LanguageToggle languages={["en", "es"]} />
+          <LanguageToggle
+            languages={
+              play && specialty === "QUANTUM" ? undefined : ["en", "es"]
+            }
+          />
           <Button
             variant="outline"
             onClick={() => {
@@ -53,6 +58,8 @@ export default function AdvancedPreview() {
             </Button>
             {specialty === "AI" ? (
               <SparBotsGame storageScope="preview" />
+            ) : specialty === "QUANTUM" ? (
+              <QubitCoveGame storageScope="preview" />
             ) : (
               <BioTrailGame storageScope="preview" />
             )}

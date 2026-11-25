@@ -56,34 +56,9 @@ const PAGES = [
   { path: "/feedback", name: "feedback page" },
 ];
 
-/**
- * The game's own reduced-effects preference, read by `useReducedGameEffects`
- * and applied by `GameShell` as `data-reduced-effects="true"`, which sets
- * `animation: none` on every effect class in `game-effects.css`.
- */
 const REDUCED_EFFECTS_KEY = "brightboost.reducedGameEffects";
 
-/**
- * Visit a page and wait until axe can sample a settled one.
- *
- * axe computes colour contrast from the colours it finds at the moment it
- * runs, and a card part-way through a fade-in blends its text with whatever is
- * behind it. That is what produced eight "serious" contrast nodes on `/` —
- * every one of them inside GameShell's briefing entrance — while axe run
- * against the same release build after the animation reports none.
- *
- * Two guards, because one of them alone is a race:
- *  - the game's reduced-effects preference is set BEFORE the page loads (the
- *    same `onBeforeLoad` seam the storage cases below use), so the entrance
- *    animation never runs at all;
- *  - on `/` the wait is for the real game — the panel reserves its box before
- *    the lazy chunk arrives, so `main` existing proves nothing — and then for
- *    every finite animation on the page to have finished. Infinite ones are
- *    excluded deliberately: they never finish, and an idle loop is not a
- *    settling state.
- *
- * The assertion itself is untouched: zero violations, all rules.
- */
+/** Wait for the actual featured game and a settled page before measuring contrast. */
 function visitSettled(path: string) {
   cy.visit(path, {
     onBeforeLoad(win) {
@@ -92,7 +67,9 @@ function visitSettled(path: string) {
   });
   cy.get("main").should("exist");
   if (path === "/") {
-    cy.contains("button", "Start Mission").should("be.visible");
+    cy.get('canvas[aria-label="Qubit Cove island playground"]').should(
+      "be.visible",
+    );
   }
   cy.document().should((doc) => {
     const unsettled = doc

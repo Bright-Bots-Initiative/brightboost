@@ -115,23 +115,10 @@ describe("Core Demo Flow E2E Test", () => {
   });
 
   context("Student Flow", () => {
-    it("should allow a new student to sign up and auto-login", () => {
-      cy.log("Starting student signup...");
-      cy.contains("Sign Up").click();
-      cy.url().should("include", "/signup");
-      cy.contains("Student Signup").click(); // On SignupSelection page
-      cy.url().should("include", "/student/signup");
-
-      cy.get("input#name").type(student.name);
-      cy.get("input#email").type(student.email);
-      cy.get("input#password").type(student.password);
-      cy.get("input#confirmPassword").type(student.password);
-      cy.get('button[type="submit"]').click();
-
-      cy.url().should("include", "/student/dashboard", { timeout: 10000 });
-      cy.window().its("localStorage.token").should("exist");
-      cy.window().its("localStorage.user").should("exist");
-      cy.log("Student signup and auto-login successful.");
+    it("offers class-code sign-in from registration", () => {
+      cy.visit("/signup");
+      cy.get('a[href="/class-login"]').click();
+      cy.location("pathname").should("eq", "/class-login");
     });
 
     it("should allow an existing student to login", () => {

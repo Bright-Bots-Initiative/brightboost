@@ -122,5 +122,48 @@ async function seedAdvanced(prisma, teacherId) {
       content: JSON.stringify({ gameKey: "sparbots" }),
     },
   });
+  const coveDetails = {
+    title: "Qubit Cove",
+    description: "Explore islands and measure a qubit to see a 0 or a 1.",
+    level: "K-2",
+    published: true,
+  };
+  const cove = await prisma.module.upsert({
+    where: { slug: "advanced-quantum-qubit-cove" },
+    update: coveDetails,
+    create: { slug: "advanced-quantum-qubit-cove", ...coveDetails },
+  });
+  const coveUnitData = {
+    moduleId: cove.id,
+    title: "The quantum islands",
+    order: 1,
+  };
+  const coveUnit = await prisma.unit.upsert({
+    where: { id: "qubit-cove-islands" },
+    update: coveUnitData,
+    create: { id: "qubit-cove-islands", teacherId, ...coveUnitData },
+  });
+  const coveLessonData = {
+    unitId: coveUnit.id,
+    title: "My first qubit",
+    order: 1,
+  };
+  const coveLesson = await prisma.lesson.upsert({
+    where: { id: "qubit-cove-expedition" },
+    update: coveLessonData,
+    create: { id: "qubit-cove-expedition", ...coveLessonData },
+  });
+  const coveActivityData = {
+    lessonId: coveLesson.id,
+    title: coveDetails.title,
+    kind: "INTERACT",
+    order: 1,
+    content: JSON.stringify({ gameKey: "qubit_cove" }),
+  };
+  await prisma.activity.upsert({
+    where: { id: "qubit_cove" },
+    update: coveActivityData,
+    create: { id: "qubit_cove", ...coveActivityData },
+  });
 }
 module.exports = { seedAdvanced };

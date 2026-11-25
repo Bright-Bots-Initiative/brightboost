@@ -98,7 +98,7 @@ router.post(
       });
 
       const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-      const acceptUrl = `${frontendUrl}/home-access/accept?token=${invite.token}`;
+      const acceptUrl = `${frontendUrl}/home-access/accept#token=${encodeURIComponent(invite.token)}`;
       const delivered = await sendHomeAccessInviteEmail(
         input.adultEmail,
         acceptUrl,

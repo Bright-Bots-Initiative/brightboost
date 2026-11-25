@@ -19,36 +19,32 @@
  * the compiler catches typos in event names.
  */
 import posthog from "posthog-js";
+import {
+  analyticsIngestionOrigin,
+  DEFAULT_POSTHOG_HOST,
+  INVALID_ANALYTICS_HOST_WARNING,
+} from "./analyticsHost";
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
-const DEFAULT_POSTHOG_HOST = "https://us.i.posthog.com";
-
-/** An ingestion origin, never a dashboard URL or a value safe to echo raw. */
 function resolvePostHogHost(): string {
   const raw = import.meta.env.VITE_POSTHOG_HOST as string | undefined;
-  if (!raw) return DEFAULT_POSTHOG_HOST;
-  try {
-    const url = new URL(raw);
-    // Check the original shape too: URL parsing erases empty ?/# delimiters
-    // and dot paths. A root slash is harmless; any other path is not an origin.
-    if (
-      /^https:\/\/[^/?#\\\s]+\/?$/i.test(raw) &&
-      url.protocol === "https:" &&
-      !url.username &&
-      !url.password &&
-      url.pathname === "/" &&
-      !url.search &&
-      !url.hash
-    ) {
-      return url.origin;
+  const origin = analyticsIngestionOrigin(raw);
+  if (raw && !origin) console.warn(INVALID_ANALYTICS_HOST_WARNING);
+  return origin ?? DEFAULT_POSTHOG_HOST;
+}
+
+// PostHog attaches URLs to events and to nested attribution properties, including
+// referrers saved by an older client. Keep the route and the explicit funnel fields.
+function scrubAnalyticsUrls(properties: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(properties)) {
+    if (typeof value === "string" && /^(?:https?:\/\/|\/)/i.test(value)) {
+      properties[key] = value
+        .split(/[?#]/, 1)[0]
+        .replace(/(\/auth\/home-access\/invite)\/[^/]+$/i, "$1");
+    } else if (value && typeof value === "object") {
+      scrubAnalyticsUrls(value as Record<string, unknown>);
     }
-  } catch {
-    // Do not log the parser error: it can include the rejected input.
   }
-  console.warn(
-    "[analytics] Invalid VITE_POSTHOG_HOST; using the default ingestion host.",
-  );
-  return DEFAULT_POSTHOG_HOST;
 }
 
 export type AnalyticsRole = "teacher" | "student" | "parent" | "admin";
@@ -257,6 +253,16 @@ export function initAnalytics(): void {
     autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
+    mask_personal_data_properties: true,
+    custom_personal_data_properties: ["token"],
+    before_send: (event) => {
+      if (event) {
+        scrubAnalyticsUrls(event.properties);
+        if (event.$set) scrubAnalyticsUrls(event.$set);
+        if (event.$set_once) scrubAnalyticsUrls(event.$set_once);
+      }
+      return event;
+    },
     // Checked against posthog-js 1.379.3's installed PostHogConfig types.
     // Client settings override remotely enabled capture for these features.
     disable_session_recording: true,
@@ -268,6 +274,8 @@ export function initAnalytics(): void {
     // starts it, and resetAnalytics stops it before clearing the identity.
     // Those permitted recordings still mask all inputs and rendered text.
     session_recording: {
+      recordBody: false,
+      recordHeaders: false,
       maskAllInputs: true,
       maskTextSelector: "*",
     },

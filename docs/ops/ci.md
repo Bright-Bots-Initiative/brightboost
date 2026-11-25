@@ -1,4 +1,4 @@
-> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-29; deployment footprint check 2026-10-05; route transfer budgets 2026-11-17.
+> **Canonical for:** CI jobs and parity. Last verified against code: 2026-08-25; Legacy fossils section 2026-09-29; deployment footprint check 2026-10-05; route transfer budgets 2026-11-24.
 
 # CI jobs and Cypress gates
 
@@ -238,14 +238,14 @@ The production Vite build measures deduplicated JavaScript and CSS at gzip level
 
 | Cold visit                               | Measured KiB | Budget KiB |
 | ---------------------------------------- | -----------: | ---------: |
-| Startup                                  |        346.4 |        390 |
-| Landing                                  |        385.0 |        410 |
-| Student login                            |        352.5 |        400 |
-| Class login                              |        355.2 |        400 |
-| Teacher login                            |        349.6 |        400 |
-| Student activity before selecting a game |        398.1 |        455 |
+| Startup                                  |        348.5 |        390 |
+| Landing                                  |        372.1 |        410 |
+| Student login                            |        354.5 |        400 |
+| Class login                              |        357.2 |        400 |
+| Teacher login                            |        351.6 |        400 |
+| Student activity before selecting a game |        400.7 |        455 |
 
-`src/build/routeBudgets.mjs` fails the build for an oversized visit or a teacher/facilitator screen or unselected game in these graphs. After building, CI also opens each public entry and the playable demo in fresh Chromium sessions at 100 ms latency and 200 KB/s download, then blocks a route chunk and verifies that Reload restores the page. Run `node scripts/verify-built-routes.mjs` after `npm run build` with Playwright Chromium installed. The homepage includes the real Tank Trek briefing in its budget; the maze engine downloads on Start Mission. The separate deployment footprint check still covers the entire distribution, including static game assets.
+`src/build/routeBudgets.mjs` fails the build for an oversized visit or a teacher/facilitator screen or unselected game in these graphs. After building, CI also opens each public entry and the playable demo in fresh Chromium sessions at 100 ms latency and 200 KB/s download, then blocks a route chunk and verifies that Reload restores the page. Run `node scripts/verify-built-routes.mjs` after `npm run build` with Playwright Chromium installed. The homepage loads the playable Qubit Cove island after first paint, including when the external font service is blocked. Its full-screen link, `/try?game=qubit_cove`, also loads only Qubit Cove. Choosing grades 3–5 shows Tank Trek’s briefing; Start Mission loads the maze. Both `/try` and `/try?band=g3_5` retain their Tank Trek demos. The separate deployment footprint check still covers the entire distribution, including static game assets.
 
 ## Scripts cheat sheet
 

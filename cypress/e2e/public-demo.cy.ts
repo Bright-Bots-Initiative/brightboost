@@ -1,18 +1,4 @@
-/**
- * The homepage demo, played.
- *
- * The homepage claims that the panel in its hero IS the game, so this spec
- * plays it: the briefing, three real mazes with the solver-verified optimal
- * programs, the game's own result, the panel's completion card, and a replay
- * that lands back on the briefing. A screenshot cannot fail this spec; only a
- * working game can pass it.
- *
- * Two properties ride along, because both are the reason the panel exists in
- * this form:
- *   - the whole visit makes NO request to `/api/` — an anonymous visitor plays
- *     without the page talking to the backend even once;
- *   - `/try` still mounts exactly one game area of its own.
- */
+/** Exercise the public games through their embedded and full-screen entry points. */
 
 /** The optimal programs from each demo level's own hint. */
 const LEVELS = [
@@ -48,17 +34,55 @@ function watchApiCalls(): string[] {
   return calls;
 }
 
-describe("the homepage panel is the real Tank Trek", () => {
-  it("plays all three mazes, shows the completion card, and replays", () => {
-    const apiCalls = watchApiCalls();
+const COVE_CANVAS = 'canvas[aria-label="Qubit Cove island playground"]';
 
+describe("the public Bright Boost games", () => {
+  it("lights every beacon in the homepage game, finishes and replays anonymously", () => {
+    const apiCalls = watchApiCalls();
     cy.visit("/");
 
-    // The page opens on its own heading, not scrolled down to the game.
     cy.get("#hero-heading").should("be.visible");
     cy.window().its("scrollY").should("eq", 0);
+    cy.get(COVE_CANVAS).should("have.length", 1).and("be.visible");
 
-    // Ready state: the game's own briefing, with one primary start.
+    for (const mission of [
+      { name: "Zero Garden", samples: 1, answer: "Only 0" },
+      { name: "One Peak", samples: 1, answer: "Only 1" },
+      { name: "Chance Harbor", samples: 3, answer: "0 or 1" },
+    ]) {
+      cy.contains("button", "Island map").click();
+      cy.contains('[role="dialog"] button', mission.name).click();
+      cy.contains("button", "Use beacon").click();
+      cy.get('[role="dialog"]').within(() => {
+        for (let i = 0; i < mission.samples; i++) {
+          cy.contains(
+            "button",
+            i === 0 ? "Prepare qubit" : "Prepare a fresh qubit",
+          ).click();
+          cy.contains("button", "Measure").click();
+        }
+        cy.contains("button", mission.answer).click();
+        cy.contains("button", "Back to the cove").click();
+      });
+    }
+
+    cy.contains("button", "Finish adventure").click();
+    cy.contains("h3", "The lighthouse is shining!").should("be.visible");
+    cy.contains("Beacons lit: 3 of 3").should("be.visible");
+    cy.get("a[href='/for-teachers']").should("exist");
+    cy.get("a[href='/for-families']").should("exist");
+    cy.contains(/save your stars/i).should("not.exist");
+
+    cy.contains("button", "Play again").click();
+    cy.get(COVE_CANVAS).should("have.length", 1);
+    cy.get('[aria-label="Beacons lit: 0 of 3"]').should("be.visible");
+    cy.contains("button", "Finish adventure").should("not.exist");
+    cy.then(() => expect(apiCalls).to.have.length(0));
+  });
+
+  it("plays the original three Tank Trek mazes at /try", () => {
+    const apiCalls = watchApiCalls();
+    cy.visit("/try");
     cy.contains("button", "Start Mission").should("be.visible").click();
     cy.get(GAME_AREA).should("have.length", 1);
 
@@ -85,42 +109,24 @@ describe("the homepage panel is the real Tank Trek", () => {
       }
     });
 
-    // The panel's completion card: the stars earned, one prominent replay, the
-    // adult paths underneath, and a way to the full-screen demo.
-    cy.contains("You finished all three mazes!").should("be.visible");
-    cy.get("[data-testid='demo-stars']").should("be.visible");
-    cy.get("a[href='/for-teachers']").should("exist");
-    cy.get("a[href='/for-families']").should("exist");
-    cy.get("a[href='/try']").should("exist");
-    // No claim that anything was saved or unlocked.
-    cy.contains(/save your stars/i).should("not.exist");
-    cy.contains(/unlock/i).should("not.exist");
-
+    cy.contains("h1", "You did it!").should("be.visible");
     cy.contains("button", "Play again").click();
     cy.contains("button", "Start Mission").should("be.visible");
     cy.get(GAME_AREA).should("have.length", 0);
-
-    cy.then(() => {
-      expect(
-        apiCalls,
-        `API requests from the homepage demo: ${apiCalls.join(" | ")}`,
-      ).to.have.length(0);
-    });
+    cy.then(() => expect(apiCalls).to.have.length(0));
   });
 
-  it("leaves /try with exactly one game area of its own", () => {
+  it("opens the featured game on its own playable page", () => {
     const apiCalls = watchApiCalls();
-
-    cy.visit("/try");
-    cy.contains("button", "Start Mission").should("be.visible").click();
-    cy.get(GAME_AREA).should("have.length", 1);
-
-    cy.then(() => {
-      expect(
-        apiCalls,
-        `API requests from /try: ${apiCalls.join(" | ")}`,
-      ).to.have.length(0);
-    });
+    cy.visit("/");
+    cy.get(COVE_CANVAS).should("be.visible");
+    cy.contains("a", "Open in full screen").click();
+    cy.location("pathname").should("eq", "/try");
+    cy.location("search").should("eq", "?game=qubit_cove");
+    cy.get(COVE_CANVAS).should("have.length", 1).and("be.visible");
+    cy.contains("button", "Island map").click();
+    cy.contains('[role="dialog"] button', "Zero Garden").should("be.visible");
+    cy.then(() => expect(apiCalls).to.have.length(0));
   });
 
   it("keeps the selected grade band when opening the full-screen demo", () => {
@@ -135,18 +141,8 @@ describe("the homepage panel is the real Tank Trek", () => {
     cy.then(() => expect(apiCalls).to.have.length(0));
   });
 
-  /**
-   * A token in the visitor's browser must not turn a public page into an
-   * authenticated one. `usePersonalBest` fetches whenever `bb_access_token`
-   * exists, so the panel states that it is public (`publicDemo`) rather than
-   * trusting that no token is there.
-   *
-   * The one request a token still produces is `AuthProvider`'s session check
-   * (`/get-progress`), which is app-wide and predates this panel: it fires the
-   * same way on `/privacy`. This spec pins the demo's own contract — no
-   * personal-best read, and nothing else from this page — rather than
-   * asserting a silence the application as a whole does not keep.
-   */
+  // An old login token triggers the app-wide session check on public pages.
+  // Neither of the two featured games should request any learner records.
   it("never reads a personal best, even with a stale token in localStorage", () => {
     const apiCalls = watchApiCalls();
 
@@ -155,6 +151,8 @@ describe("the homepage panel is the real Tank Trek", () => {
         win.localStorage.setItem("bb_access_token", "synthetic");
       },
     });
+    cy.get(COVE_CANVAS).should("be.visible");
+    cy.contains("button", "Grades 3–5").click();
     cy.contains("button", "Start Mission").should("be.visible");
     cy.contains("Best").should("not.exist");
 

@@ -2087,8 +2087,8 @@
     }
   },
   "signupSelection": {
-    "title": "Create your account",
-    "subtitle": "Pick what fits you best.",
+    "title": "Set up an account",
+    "subtitle": "Teachers and families can add learners to a class or home group.",
     "teacherCard": {
       "heading": "I'm a Teacher",
       "blurb": "Bring K-8 STEM learning into your classroom.",
@@ -2099,15 +2099,10 @@
       "blurb": "Set up a home group and learn together with your child.",
       "cta": "Sign up & start at home"
     },
-    "studentCard": {
-      "heading": "I'm a Student",
-      "blurb": "Play STEM missions and track your progress.",
-      "cta": "Sign up as a Student"
-    },
     "haveAccount": "Already have an account?",
     "logIn": "Log in",
-    "classCodeNote": "Have a class code from your teacher?",
-    "classCodeLink": "Join your class"
+    "classCodeNote": "Students, use the code your teacher or family gave you.",
+    "classCodeLink": "Sign in with a class code"
   },
   "teacherSignup": {
     "pageTitle": "Sign up as a teacher",
@@ -2845,7 +2840,7 @@
     "familiar": "Your classes, creations, and familiar navigation stay right here.",
     "comingTitle": "Your next discoveries are growing.",
     "comingDescription": "New games for this specialty are being built. Your earlier games and creations are ready to revisit.",
-    "play": "Explore Adaptation Islands",
+    "play": "Play {{title}}",
     "revisit": "Revisit my games",
     "fieldNote": "A question to take with you",
     "setsComplete": "Foundation, Exploration, Mastery: complete",
@@ -2866,6 +2861,14 @@
     "resetPreview": "Preview another specialty",
     "previewLocked": "Show locked state",
     "previewBack": "Back to specialty preview",
+    "qubitCove": {
+      "title": "Qubit Cove",
+      "tagline": "Hop across islands and measure a qubit. Will you see 0 or 1?",
+      "tag1": "Explore",
+      "tag2": "Jump",
+      "tag3": "Measure",
+      "gameLocked": "Qubit Cove opens after Set 3 when you choose Quantum. View my specialty."
+    },
     "tracks": {
       "AI": {
         "name": "AI / ML",
@@ -2885,9 +2888,9 @@
         "verbs": "Wonder · Experiment · Discover",
         "companion": "Quantum guide",
         "previewTitle": "A world of possibilities",
-        "preview": "Violet accents, an atom badge, and experiment prompts give your quantum world its own feel.",
+        "preview": "Visit Qubit Cove. Hop between islands and measure a qubit to see a 0 or a 1.",
         "welcome": "Your quantum journey begins.",
-        "question": "What could an experiment help you discover that your eyes cannot see?"
+        "question": "Will every measurement give the same result?"
       },
       "BIOTECH": {
         "name": "Biotech",
@@ -3393,19 +3396,20 @@
   "home": {
     "meta": {
       "title": "Bright Boost — A world you build by learning",
-      "description": "Explore Bright Boost STEM games. Play a free robot mission, then choose the right starting point for your classroom or family.",
+      "description": "Play Qubit Cove, a free K–2 quantum adventure from Bright Boost. Explore floating islands, then find more STEM games for your classroom or family.",
       "imageAlt": "Bright Boost mascot beside the words A world you build by learning."
     },
     "eyebrow": "Free STEM learning platform",
     "displayLine": "Play. Build. Become.",
     "h1": "A world you build by learning.",
-    "heroSentence": "Program Bolt through a real robot mission. Choose a challenge for K–2 or grades 3–5.",
+    "heroSentence": "Jump across the islands of Qubit Cove and discover what happens when you measure a qubit.",
     "secondaryCta": "For teachers and families",
     "howItWorks": {
       "summary": "How the demo works",
-      "point1": "Three short mazes, played right here on this page.",
+      "point1": "Prepare and measure a qubit at each beacon. Can you tell which numbers it can show?",
       "point2": "No account and no sign-up.",
-      "point3": "It works on a phone."
+      "point3": "It works on a phone.",
+      "tankTrek": "Give Bolt a set of commands and watch where they take him."
     },
     "demo": {
       "loading": "Loading the game…",
@@ -3414,15 +3418,15 @@
       "retry": "Try again",
       "fullScreen": "Open in full screen",
       "openFull": "Open the full-screen demo",
-      "completeTitle": "You finished all three mazes!",
+      "completeTitle": "You finished Tank Trek!",
       "starsLabel": "Stars earned:",
       "playAgain": "Play again",
       "adultsLabel": "For grown-ups",
       "teacherLink": "For teachers",
       "familyLink": "For families",
-      "bandLabel": "Choose a game level",
-      "bandK2": "Grades K–2",
-      "bandG35": "Grades 3–5",
+      "bandLabel": "Choose a game",
+      "bandK2": "Qubit Cove · K–2",
+      "bandG35": "Tank Trek · Grades 3–5",
       "metaTitle": "Try Bright Boost — free STEM game, no signup",
       "metaDescription": "Play a free Bright Boost robot mission for K–2 or grades 3–5. No account needed.",
       "staysLocal": "Play without a name or an account. We send play counts and scores to PostHog, our counting helper.",
@@ -3450,7 +3454,7 @@
       }
     },
     "adults": {
-      "intro": "Adults get their own entry. Children never sign up for themselves.",
+      "intro": "Teachers and families set up K–8 student accounts. Students can sign in with a class code.",
       "teacherTitle": "Teachers",
       "familyTitle": "Families",
       "plansTitle": "Free access plans",
@@ -3475,7 +3479,8 @@
       "g68Description": "Coming soon",
       "available": "Available now",
       "coming": "Coming soon"
-    }
+    },
+    "tankTrekHeroSentence": "Guide Bolt through the mazes in Tank Trek. Plan a route, then run your code."
   },
   "publicChrome": {
     "fromNonprofit": "From Bright Bots Initiative",
@@ -3507,5 +3512,68 @@
       "cloudflare": "Cloudflare Web Analytics receives the page URL, a page-load identifier, and performance measurements, including load timings, layout shifts, element selectors, and browser memory usage.",
       "requests": "Requests to these providers also carry connection information, such as your IP address and browser request headers."
     }
+  },
+  "qubitCove": {
+    "title": "Qubit Cove",
+    "goal": "Light all three beacons to wake the lighthouse.",
+    "canvas": "Qubit Cove island playground",
+    "lights": "Beacons lit: {{count}} of 3",
+    "sparks": "Sparks: {{count}}",
+    "map": "Island map",
+    "mapHint": "Choose a beacon to ride there.",
+    "names": {
+      "zero": "Zero Garden",
+      "one": "One Peak",
+      "mix": "Chance Harbor"
+    },
+    "visit": "Ride to {{name}}",
+    "lit": "Lit",
+    "unlit": "Unlit",
+    "controls": "Game controls",
+    "up": "Move up",
+    "down": "Move down",
+    "left": "Move left",
+    "right": "Move right",
+    "jump": "Jump",
+    "keyboard": "Move with the arrow keys or WASD. Press Space to jump. Press E to use a beacon.",
+    "use": "Use beacon",
+    "close": "Close",
+    "setup": {
+      "zero": "Set your qubit to 0.",
+      "one": "Set your qubit to 1.",
+      "mix": "Give 0 and 1 the same chance. Try three times. Use a fresh qubit each time."
+    },
+    "prepare": "Prepare qubit",
+    "prepareAgain": "Prepare a fresh qubit",
+    "measure": "Measure",
+    "ready": "Ready to measure!",
+    "readings": "Your readings",
+    "prediction": "Which numbers can you get with this setup?",
+    "choices": {
+      "zero": "Only 0",
+      "one": "Only 1",
+      "mix": "0 or 1"
+    },
+    "retry": "Look at how you set up the qubit. Try again!",
+    "insight": {
+      "zero": "Set it to 0 and you get 0.",
+      "one": "Set it to 1 and you get 1.",
+      "mix": "Either number can show up. You can get the same number again."
+    },
+    "beaconLit": "{{name}} is lit!",
+    "explore": "Back to the cove",
+    "won": "The lighthouse is shining!",
+    "replay": "Play again",
+    "finish": "Finish adventure",
+    "saveError": "Your progress could not be saved. Try Finish adventure again.",
+    "help": "How to play",
+    "reduced": "Reduce motion",
+    "reading": "You got {{value}}!",
+    "litAlready": "You lit this beacon.",
+    "touch": "Hold the arrows to move. Tap Jump to hop. Choose Island map for a ride.",
+    "saved": "Adventure complete",
+    "listen": "Read aloud",
+    "aboutQubits": "A quantum computer uses qubits. Here, measuring a qubit shows one number, 0 or 1.",
+    "cometJump": "Keep moving and jump again as you land for a higher comet jump."
   }
 }

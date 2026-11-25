@@ -5,12 +5,9 @@
  * Two product truths shape it, and both come from the application rather than
  * from taste:
  *
- *  1. **There is no K–2 self-registration.** `/student/signup` exists for
- *     self-registering students and is explicitly not the K–2 path; K–2 signs
- *     in with a class code and a picture (plus an optional PIN) at
- *     `/class-login`, and `/student-login` is the chooser. So the page offers
- *     an adult two doors and says plainly that a young child cannot open
- *     either alone.
+ *  1. Adults create K–8 learner accounts in a class or home-group roster.
+ *     Students with a code sign in at `/class-login`; older signup links
+ *     redirect there. Existing email logins remain on `/student-login`.
  *  2. **"Create a home group" is a real destination.** `/parents` already
  *     links it at `/teacher/signup?intent=home` (`TeacherSignup.tsx` reads
  *     `intent === "home"`). This page points at the same place rather than

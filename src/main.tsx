@@ -10,6 +10,12 @@ if (rootEl) {
       import("./App"),
       import("./lib/analytics"),
     ]);
+    // Keep an unavailable third-party font out of the required app CSS preload.
+    const font = document.createElement("link");
+    font.rel = "stylesheet";
+    font.href =
+      "https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap";
+    document.head.append(font);
     initAnalytics();
     return App;
   });

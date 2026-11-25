@@ -31,7 +31,8 @@ function graph() {
   bundle["App.tsx"].dynamicImports.push(...files.slice(2));
   return bundle;
 }
-const measure = (bundle) => routeBudgets().generateBundle.handler({}, bundle);
+const measure = (bundle) =>
+  routeBudgets("/project").generateBundle.handler({}, bundle);
 describe("cold route budgets", () => {
   it("excludes a game reached only by dynamic import", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});

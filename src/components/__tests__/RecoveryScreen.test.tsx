@@ -51,6 +51,29 @@ describe("#905 — startup and render recovery", () => {
     act(() => vi.advanceTimersByTime(20_000));
     expect(screen.getByRole("button", { name: "Reload page" })).toBeEnabled();
   });
+  it("opens the app when a slow download finishes after the retry screen appears", async () => {
+    vi.useFakeTimers();
+    let resolve!: (component: () => React.JSX.Element) => void;
+    await act(async () => {
+      dispose = bootstrap(
+        host,
+        () =>
+          new Promise((yes) => {
+            resolve = yes;
+          }),
+      );
+    });
+    act(() => vi.advanceTimersByTime(20_000));
+    expect(screen.getByRole("button", { name: "Reload page" })).toBeEnabled();
+    expect(
+      screen.getByRole("heading", { name: "Bright Boost is still loading" }),
+    ).toBeVisible();
+    await act(async () => resolve(() => <h1>Loaded classroom</h1>));
+    expect(
+      screen.getByRole("heading", { name: "Loaded classroom" }),
+    ).toBeVisible();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
   it("contains a rejected lazy route import", async () => {
     const Route = lazy(async () => {
       throw new Error("Old route chunk");

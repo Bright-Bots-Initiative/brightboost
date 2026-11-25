@@ -26,6 +26,8 @@ try {
     });
     return { context, page };
   }
+  const coveUrl = "/try?game=qubit_cove";
+  const tankUrl = "/try?band=g3_5";
   const urls = [
     "/",
     "/student-login",
@@ -33,6 +35,8 @@ try {
     "/class-login",
     "/student/dashboard",
     "/try",
+    coveUrl,
+    tankUrl,
   ];
   for (const url of urls) {
     const { context, page } = await fresh();
@@ -43,47 +47,81 @@ try {
         requests.push(new URL(r.url()).pathname);
     });
     page.on("pageerror", (e) => errors.push(e.message));
+    // A school network can block external fonts; the featured game must still open.
+    if (url === "/")
+      await page.route("https://fonts.googleapis.com/**", (route) =>
+        route.abort("failed"),
+      );
     await page.goto(host + url, { waitUntil: "domcontentloaded" });
-    if (url === "/") {
-      await page.locator("h1#hero-heading").waitFor();
-      await page.getByRole("button", { name: /start mission/i }).waitFor();
-    }
-    if (url === "/class-login") await page.getByPlaceholder("ABC123").waitFor();
-    if (url === "/teacher-login")
-      await page.getByPlaceholder("teacher@school.com").waitFor();
-    if (url === "/student-login" || url === "/student/dashboard") {
-      await page.getByPlaceholder("Email address").waitFor();
-      assert.equal(new URL(page.url()).pathname, "/student-login");
-    }
-    if (url === "/try") {
+    const loaded = (pattern) => requests.some((path) => pattern.test(path));
+    const coveEngine = /\/QubitCoveGame-[^/]+\.js$/;
+    const tankEngine = /\/TankTrekGame-[^/]+\.js$/;
+    const playTank = async () => {
       const start = page.getByRole("button", { name: /start mission/i });
+      await start.waitFor();
+      assert(
+        !loaded(tankEngine),
+        "The Tank Trek briefing must not load the maze",
+      );
       await start.click();
-      await start.waitFor({ state: "hidden" });
       await page
         .getByRole("button", { name: "Forward", exact: true })
         .waitFor();
-      assert(requests.some((x) => /\/TankTrekGame-/.test(x)));
+      assert(loaded(tankEngine), "Start Mission must load the maze");
+    };
+
+    if (url === "/" || url === coveUrl) {
+      if (url === "/") await page.locator("h1#hero-heading").waitFor();
+      await page
+        .getByRole("img", { name: "Qubit Cove island playground" })
+        .waitFor();
+      await page.getByRole("button", { name: "Jump", exact: true }).waitFor();
+      assert(
+        loaded(coveEngine),
+        "The featured game must load its playable island",
+      );
+      assert(
+        !loaded(tankEngine),
+        "Qubit Cove must not download the Tank Trek maze",
+      );
+      if (url === "/") {
+        const fullScreen = page.getByRole("link", {
+          name: "Open in full screen",
+          exact: true,
+        });
+        assert.equal(await fullScreen.getAttribute("href"), coveUrl);
+        await page.getByRole("button", { name: /Tank Trek.*3–5/i }).click();
+        assert.equal(await fullScreen.getAttribute("href"), tankUrl);
+        await playTank();
+      }
+    } else if (url === "/try" || url === tankUrl) {
+      await playTank();
+      assert(
+        !loaded(coveEngine),
+        "Tank Trek shared links must not load Qubit Cove",
+      );
+    } else {
+      if (url === "/class-login")
+        await page.getByPlaceholder("ABC123").waitFor();
+      if (url === "/teacher-login")
+        await page.getByPlaceholder("teacher@school.com").waitFor();
+      if (url === "/student-login" || url === "/student/dashboard") {
+        await page.getByPlaceholder("Email address").waitFor();
+        assert.equal(new URL(page.url()).pathname, "/student-login");
+      }
+      assert(
+        !loaded(coveEngine) && !loaded(tankEngine),
+        "Login must not load either game",
+      );
     }
-    const wrong = requests.filter(
-      (x) =>
-        /\/(?:TeacherDashboard|GotchaGearsGame|RhymeRideGame|QuantumQuestGame|BiomeBuddy|Waterworks)-/.test(
-          x,
-        ) ||
-        (url !== "/try" && /\/TankTrekGame-/.test(x)),
+    const wrong = requests.filter((path) =>
+      /\/(?:TeacherDashboard|GotchaGearsGame|RhymeRideGame|QuantumQuestGame|BiomeBuddy|Waterworks)-/.test(
+        path,
+      ),
     );
     assert.deepEqual(wrong, []);
     assert.deepEqual(errors, []);
     console.log("PASS constrained", url, "=>", new URL(page.url()).pathname);
-    if (url === "/") {
-      await page.getByRole("button", { name: /start mission/i }).click();
-      await page
-        .getByRole("button", { name: "Forward", exact: true })
-        .waitFor();
-      assert(
-        requests.some((x) => /\/TankTrekGame-/.test(x)),
-        "Start must load the Tank Trek engine",
-      );
-    }
     await context.close();
   }
   const { context, page } = await fresh();

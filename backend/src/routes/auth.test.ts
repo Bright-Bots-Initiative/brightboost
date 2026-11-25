@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import request from "supertest";
 import { PrismaClient } from "@prisma/client";
@@ -32,32 +33,50 @@ describe("Auth Routes", () => {
     vi.clearAllMocks();
   });
 
-  describe("POST /api/signup/student", () => {
-    it("should create a new student", async () => {
+  it("refuses public student creation before looking up or writing an account", async () => {
+    const res = await request(app)
+      .post("/api/signup/student")
+      .send({
+        name: "Learner",
+        email: "learner@example.invalid",
+        password: randomUUID() + "Aa1",
+        role: "teacher",
+      });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe("adult_provisioning_required");
+    expect(prismaMock.user.findUnique).not.toHaveBeenCalled();
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
+  });
+
+  describe("POST /api/signup/teacher", () => {
+    it("should create a new teacher", async () => {
       // @ts-ignore
       prismaMock.user.findUnique.mockResolvedValue(null);
       // @ts-ignore
       prismaMock.user.create.mockResolvedValue({
         id: "user-123",
-        email: "student@test.com",
-        role: "student",
+        email: "teacher@example.invalid",
+        role: "teacher",
         password: "hashedpassword",
       });
 
-      const response = await request(app).post("/api/signup/student").send({
-        name: "Test Student",
-        email: "student@test.com",
+      const response = await request(app).post("/api/signup/teacher").send({
+        name: "Test Teacher",
+        email: "teacher@example.invalid",
         password: "Password123", // Strong password
       });
 
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty("token");
-      expect(response.body.user).toHaveProperty("email", "student@test.com");
+      expect(response.body.user).toHaveProperty(
+        "email",
+        "teacher@example.invalid",
+      );
       // @ts-ignore
       expect(prismaMock.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            role: "student",
+            role: "teacher",
           }),
         }),
       );
@@ -67,8 +86,8 @@ describe("Auth Routes", () => {
       // @ts-ignore
       prismaMock.user.findUnique.mockResolvedValue({ id: "existing" });
 
-      const response = await request(app).post("/api/signup/student").send({
-        name: "Test Student",
+      const response = await request(app).post("/api/signup/teacher").send({
+        name: "Test Teacher",
         email: "existing@test.com",
         password: "Password123", // Strong password
       });

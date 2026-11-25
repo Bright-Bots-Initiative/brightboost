@@ -293,65 +293,6 @@ export const signupTeacher = async (
   }
 };
 
-export const signupStudent = async (
-  name: string,
-  email: string,
-  password: string,
-  retries = 2,
-): Promise<any> => {
-  try {
-    const response = await fetch(join(API_BASE, "/signup/student"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = t("api.studentSignupFailed");
-      if (response.status === 401)
-        errorMessage = t("api.invalidEmailOrPassword");
-      else if (response.status === 409)
-        errorMessage = t("api.emailAlreadyInUse");
-      else if (response.status >= 500)
-        errorMessage = t("api.serviceUnavailable");
-      else {
-        try {
-          const errorData = JSON.parse(errorText);
-          errorMessage = extractErrorMessage(errorData) || errorMessage;
-        } catch {
-          errorMessage = `${t("api.studentSignupFailed")}: ${response.status} ${response.statusText}`;
-        }
-      }
-      throw new Error(errorMessage);
-    }
-
-    return await response.json();
-  } catch (error) {
-    if (
-      retries > 0 &&
-      error instanceof TypeError &&
-      error.message === "Failed to fetch"
-    ) {
-      toast({
-        title: t("api.retrying"),
-        description: `${t("api.retryingLoginRequest")} (${retries} ${t("api.retriesLeft")})`,
-        variant: "default",
-      });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return signupStudent(name, email, password, retries - 1);
-    }
-    if (error instanceof TypeError && error.message === "Failed to fetch") {
-      toast({
-        title: t("api.signupFailed"),
-        description: t("api.checkInternetConnection"),
-        variant: "destructive",
-      });
-    }
-    throw error;
-  }
-};
-
 // Hook for authenticated API calls
 export const useApi = () => {
   const { token } = useAuth();

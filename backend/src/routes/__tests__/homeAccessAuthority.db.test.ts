@@ -81,7 +81,7 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
   const lastEmailedToken = () => {
     const calls = mailMock.sendHomeAccessInviteEmail.mock.calls;
     const url = calls[calls.length - 1][1] as string;
-    return new URL(url).searchParams.get("token")!;
+    return new URLSearchParams(new URL(url).hash.slice(1)).get("token")!;
   };
 
   const inviteIn = (
@@ -106,7 +106,10 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
       .send({ token, email, password });
 
   const preview = (token: string) =>
-    request(app).get(`/api/auth/home-access/invite/${token}`).set(newIp());
+    request(app)
+      .post("/api/auth/home-access/invite")
+      .set(newIp())
+      .send({ token });
 
   const deleteClass = (courseId: string) =>
     request(app)
@@ -330,7 +333,12 @@ describe.skipIf(!dbUrl)("#872 home-access binding (real PostgreSQL)", () => {
     const calls = mailMock.sendHomeAccessInviteEmail.mock.calls;
     const tokens = calls
       .slice(-2)
-      .map((c) => new URL(c[1] as string).searchParams.get("token")!);
+      .map(
+        (c) =>
+          new URLSearchParams(new URL(c[1] as string).hash.slice(1)).get(
+            "token",
+          )!,
+      );
     for (const tok of tokens) {
       const res = await accept(tok, `again-${tag}@home.test`);
       expect([409, 410]).toContain(res.status);

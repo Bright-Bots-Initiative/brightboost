@@ -1,34 +1,8 @@
-/**
- * The homepage's playable panel: ONE instance of the real Tank Trek game.
- *
- * Not a screenshot, not a scripted imitation and not a second copy of `/try`.
- * It mounts `TankTrekGame` with the same `DEMO_CONFIG` the `/try` route uses,
- * so the briefing, the mazes, the controls, the timing, the stars and the
- * three levels are the shipped game — this component owns only what sits
- * around it: the loading box, the failure state, and the card that appears
- * after the run.
- *
- * Four properties are deliberate and each has a test:
- *
- *  1. **One engine.** A single panel, placed with CSS grid rather than
- *     rendered twice for two breakpoints, so no second game exists off-screen
- *     keeping its own timers. "Play again" remounts THIS instance with a key.
- *  2. **Play on demand.** The shared briefing paints on the homepage. The
- *     maze engine is requested only when the visitor starts a mission.
- *  3. **A failure is never the learner's.** If the chunk cannot load, the
- *     panel says so in its own words, offers "Try again" (which re-imports)
- *     and a plain link to `/try`. It never renders as a lost game.
- *  4. **Public means public.** `publicDemo` turns GameShell's personal-best
- *     read off, so a stale `bb_access_token` in this browser cannot make the
- *     homepage issue an authenticated request. See `usePersonalBest`.
- *
- * Analytics: the existing demo kinds only, with the same meanings they have on
- * `/try` — `demo_game_started` on the first interaction inside the game,
- * `demo_game_completed` when the run ends, `demo_replayed` on "Play again".
- * `demo_page_viewed` belongs to the `/try` page view and is never fired here.
+/** Featured homepage games load one at a time after the first paint.
+ * Anonymous plays use the public game's analytics identity and never submit
+ * student progress. The parent page only needs the band and a readiness signal.
  */
 import {
-  Component,
   lazy,
   Suspense,
   useCallback,
@@ -36,108 +10,49 @@ import {
   useMemo,
   useRef,
   useState,
-  type ComponentProps,
-  type ErrorInfo,
-  type ReactNode,
 } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Star } from "lucide-react";
+import { RadioTower, Star } from "lucide-react";
 import type { GameResult } from "@/components/games/shared/GameShell";
 import {
-  DEMO_CONFIG,
   G35_DEMO_CONFIG,
   DEMO_GAME_ID,
   writeDemoBest,
 } from "@/components/games/tankTrekDemo";
 import { track } from "@/lib/analytics";
-import { TankTrekBriefing } from "@/components/games/TankTrekBriefing";
 import { PUBLIC_ACTION_PRIMARY, PUBLIC_ACTION_QUIET } from "./publicEntry";
+import DemoErrorBoundary from "./DemoErrorBoundary";
+import {
+  homeDemoHref,
+  isCoveControlClick,
+  isCoveControlPress,
+  isDemoPlayKey,
+  QUBIT_COVE_DEMO_ID,
+} from "./featuredDemo";
 
-type GameModule = Pick<
-  typeof import("@/components/games/TankTrekGame"),
-  "default"
->;
+type GameModule = typeof import("@/components/games/qubitCove/QubitCoveGame");
 
 /** How the game chunk is fetched. A prop only so a test can resolve or reject
  *  it on demand; the page never passes one. */
 export type LoadGame = () => Promise<GameModule>;
 
-// GameShell renders its children only in play mode. Start Mission is the one
-// tap that both loads and plays. A retry gets a fresh lazy component.
-function HomepageTankTrek({
-  config = DEMO_CONFIG,
-  onComplete,
-}: ComponentProps<GameModule["default"]>) {
-  const { t } = useTranslation();
-  const [Play] = useState(() =>
-    lazy(() =>
-      import("@/components/games/TankTrekGame").then((module) => ({
-        default: module.TankTrekCore,
-      })),
-    ),
-  );
-  return (
-    <TankTrekBriefing config={config} onComplete={onComplete} publicDemo>
-      {(onFinish) => (
-        <Suspense
-          fallback={
-            <p role="status" className="bb-demo-status">
-              {t("home.demo.loading")}
-            </p>
-          }
-        >
-          <Play config={config} onFinish={onFinish} />
-        </Suspense>
-      )}
-    </TankTrekBriefing>
-  );
-}
+const loadQubitCove: LoadGame = () =>
+  import("@/components/games/qubitCove/QubitCoveGame");
+const loadTankTrek = () => import("@/components/games/PublicTankTrek");
 
 export interface PublicDemoProps {
   loadGame?: LoadGame;
   onBandChange?: (band: "k2" | "g3_5") => void;
   /** Extra class names for the outer panel (the homepage places it in a grid). */
   className?: string;
-  /**
-   * Called once per mount, after the lazy game has actually rendered its
-   * briefing — never while the box is still reserved, never on the failure
-   * path, and not again on a replay. The homepage uses it for one thing: a
-   * visitor who arrived on `/#plans` had their landing computed before the
-   * briefing replaced the reserved box, and the box is 4px short of the real
-   * card, so the anchor is re-settled once when the swap is done.
-   */
+  /** The homepage re-settles a fragment landing once the first game is visible. */
   onReady?: () => void;
-}
-
-/* ── The failure boundary ────────────────────────────────────────────────── */
-
-interface BoundaryProps {
-  fallback: ReactNode;
-  children: ReactNode;
-}
-
-class DemoErrorBoundary extends Component<BoundaryProps, { failed: boolean }> {
-  state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    // Left in the console for whoever is debugging a failed chunk; nothing is
-    // sent anywhere, and the visitor sees the fallback, not this.
-    console.error("Public demo failed to load", error, info.componentStack);
-  }
-
-  render() {
-    return this.state.failed ? this.props.fallback : this.props.children;
-  }
 }
 
 /**
  * Mounted as a sibling of the lazy game INSIDE the Suspense boundary, so its
- * effect cannot run until that boundary has resolved and the briefing is on
+ * effect cannot run until that boundary has resolved and the game is on
  * screen. A `useEffect` on the panel itself would fire while the box was still
  * empty, and an observer or a timer would only be guessing at the same moment.
  */
@@ -156,77 +71,81 @@ export default function PublicDemo({
   onReady,
   onBandChange,
 }: PublicDemoProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [armed, setArmed] = useState(false);
   const [demoBand, setDemoBand] = useState<"k2" | "g3_5">("k2");
   /** Bumped by "Try again": it rebuilds the lazy component, so the retry is a
    *  real second import rather than React replaying the cached rejection. */
   const [attempt, setAttempt] = useState(0);
-  /** Bumped by "Play again": remounts the one game instance at its briefing. */
+  /** Bumped by "Play again": remounts the one game instance from the beginning. */
   const [playKey, setPlayKey] = useState(0);
   const [finished, setFinished] = useState<GameResult | null>(null);
   const startedFired = useRef(false);
   const startMsRef = useRef(Date.now());
 
-  const Game = useMemo(
-    () => (loadGame ? lazy(loadGame) : HomepageTankTrek),
-    // `attempt` is the point: a new lazy component is a new import.
+  const isCove = demoBand === "k2";
+  const gameId = isCove ? QUBIT_COVE_DEMO_ID : DEMO_GAME_ID;
+  // Construct fresh lazy components on retry so React can retry a failed import.
+  const [Cove, TankTrek] = useMemo(
+    () => [lazy(loadGame ?? loadQubitCove), lazy(loadTankTrek)] as const,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [loadGame, attempt],
   );
 
   // After the first paint, not during it: the homepage's own content is what a
-  // visitor reads first; showing the briefing never requests the maze engine.
+  // visitor reads first, and the chunk is ~ the whole game.
   useEffect(() => {
     const frame = requestAnimationFrame(() => setArmed(true));
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  /**
-   * `demo_game_started` on the first interaction inside the game area, in the
-   * capture phase so the game's own handlers are untouched — the same pattern
-   * `/try` uses. The briefing has exactly one interactive control, so in
-   * practice the first click is the Start Mission tap.
-   */
   const handleFirstInteraction = useCallback(() => {
     if (startedFired.current) return;
     startedFired.current = true;
     startMsRef.current = Date.now();
-    track({ kind: "demo_game_started", game_id: DEMO_GAME_ID });
-  }, []);
+    track({ kind: "demo_game_started", game_id: gameId });
+  }, [gameId]);
 
-  const handleComplete = useCallback((result: GameResult) => {
-    track({
-      kind: "demo_game_completed",
-      game_id: DEMO_GAME_ID,
-      score: result.score,
-      stars: result.starsEarned ?? 0,
-      time_spent_seconds: Math.max(
-        1,
-        Math.round((Date.now() - startMsRef.current) / 1000),
-      ),
-    });
-    writeDemoBest(result.starsEarned ?? 0);
-    setFinished(result);
-  }, []);
+  const handleComplete = useCallback(
+    (result: GameResult) => {
+      track({
+        kind: "demo_game_completed",
+        game_id: gameId,
+        score: result.score,
+        stars: result.starsEarned ?? 0,
+        time_spent_seconds: Math.max(
+          1,
+          Math.round((Date.now() - startMsRef.current) / 1000),
+        ),
+      });
+      if (!isCove) writeDemoBest(result.starsEarned ?? 0);
+      setFinished(result);
+    },
+    [gameId, isCove],
+  );
 
-  const handlePlayAgain = useCallback(() => {
-    track({ kind: "demo_replayed", game_id: DEMO_GAME_ID });
+  const recordReplay = useCallback(() => {
+    track({ kind: "demo_replayed", game_id: gameId });
     startedFired.current = false;
+  }, [gameId]);
+
+  function handlePlayAgain() {
+    recordReplay();
     setFinished(null);
     setPlayKey((key) => key + 1);
-  }, []);
+  }
 
   const handleRetry = useCallback(() => setAttempt((n) => n + 1), []);
   const switchDemoBand = (next: "k2" | "g3_5") => {
     if (next === demoBand) return;
     setDemoBand(next);
+    setReady(false);
     onBandChange?.(next);
     setFinished(null);
     startedFired.current = false;
     setPlayKey((n) => n + 1);
   };
-  const fullScreenHref = demoBand === "g3_5" ? "/try?band=g3_5" : "/try";
+  const fullScreenHref = homeDemoHref(demoBand);
 
   /** Once per mount: a replay remounts the game, not the panel. */
   const readyFired = useRef(false);
@@ -255,7 +174,11 @@ export default function PublicDemo({
     if (finished) completeHeadingRef.current?.focus();
   }, [finished]);
 
+  const resultLanguage = isCove
+    ? i18n.resolvedLanguage || i18n.language
+    : undefined;
   const stars = finished?.starsEarned ?? 0;
+  const ResultIcon = isCove ? RadioTower : Star;
 
   const loading = (
     <p className="bb-demo-status" role="status">
@@ -315,7 +238,7 @@ export default function PublicDemo({
         <div className="bb-demo-complete">
           <p className="flex justify-center gap-1" aria-hidden="true">
             {[0, 1, 2].map((i) => (
-              <Star
+              <ResultIcon
                 key={i}
                 className={
                   i < stars
@@ -327,17 +250,24 @@ export default function PublicDemo({
           </p>
           <h3
             ref={completeHeadingRef}
+            lang={resultLanguage}
             tabIndex={-1}
             className="mt-3 text-2xl font-extrabold"
           >
-            {t("home.demo.completeTitle")}
+            {t(isCove ? "qubitCove.won" : "home.demo.completeTitle")}
           </h3>
-          {/* The count is its own node rather than an interpolated string, so
-              the number a visitor reads is the number the result carries and
-              the assertion in the test is on that number, not on a sentence. */}
-          <p className="mt-1 text-[color:var(--bb-color-text-muted)]">
-            {t("home.demo.starsLabel")}{" "}
-            <strong data-testid="demo-stars">{stars}</strong> / 3
+          <p
+            lang={resultLanguage}
+            className="mt-1 text-[color:var(--bb-color-text-muted)]"
+          >
+            {isCove ? (
+              t("qubitCove.lights", { count: finished.roundsCompleted })
+            ) : (
+              <>
+                {t("home.demo.starsLabel")}{" "}
+                <strong data-testid="demo-stars">{stars}</strong> / 3
+              </>
+            )}
           </p>
           <p className="mt-5">
             <button
@@ -374,27 +304,43 @@ export default function PublicDemo({
           </p>
         </div>
       ) : (
-        /* `onClickCapture` observes the first interaction without touching the
-           game's own handlers; `key` is how "Play again" restarts this one
-           instance instead of adding a second. */
-        <div key={playKey} onClickCapture={handleFirstInteraction}>
-          <DemoErrorBoundary key={attempt} fallback={failure}>
-            <Suspense fallback={loading}>
-              {armed ? (
-                <>
-                  <Game
-                    config={demoBand === "k2" ? DEMO_CONFIG : G35_DEMO_CONFIG}
+        <DemoErrorBoundary key={`${demoBand}-${attempt}`} fallback={failure}>
+          <Suspense fallback={loading}>
+            {armed ? (
+              <div
+                key={playKey}
+                onClickCapture={(event) => {
+                  if (!isCove || isCoveControlClick(event))
+                    handleFirstInteraction();
+                }}
+                onPointerDownCapture={(event) => {
+                  if (isCove && isCoveControlPress(event))
+                    handleFirstInteraction();
+                }}
+                onKeyDownCapture={(event) => {
+                  if (isCove && isDemoPlayKey(event)) handleFirstInteraction();
+                }}
+              >
+                {isCove ? (
+                  <Cove
+                    storageScope="homepage-demo"
+                    embedded
+                    onReplay={recordReplay}
                     onComplete={handleComplete}
-                    publicDemo
                   />
-                  <ReadySignal onReady={handleReady} />
-                </>
-              ) : (
-                loading
-              )}
-            </Suspense>
-          </DemoErrorBoundary>
-        </div>
+                ) : (
+                  <TankTrek
+                    config={G35_DEMO_CONFIG}
+                    onComplete={handleComplete}
+                  />
+                )}
+                <ReadySignal onReady={handleReady} />
+              </div>
+            ) : (
+              loading
+            )}
+          </Suspense>
+        </DemoErrorBoundary>
       )}
     </div>
   );

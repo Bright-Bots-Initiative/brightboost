@@ -3,24 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import GameShell from "../shared/GameShell";
 
-// The shared `enMock` resolves real English copy but ignores interpolation;
-// the game region's name is built from `{{title}}`, so fill option values.
 vi.mock("react-i18next", async () => {
-  const { enMock, enTranslate } = await import("@/test/i18nMock");
-  const base = enMock();
-  const t = (key: string, values?: Record<string, unknown>) => {
-    let out = enTranslate(key);
-    if (values) {
-      for (const [name, value] of Object.entries(values)) {
-        out = out.split(`{{${name}}}`).join(String(value));
-      }
-    }
-    return out;
-  };
-  return {
-    ...base,
-    useTranslation: () => ({ ...base.useTranslation(), t }),
-  };
+  const { enMock } = await import("@/test/i18nMock");
+  return enMock();
 });
 
 vi.mock("@/components/activities/ActivityHeader", () => ({

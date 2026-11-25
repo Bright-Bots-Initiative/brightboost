@@ -1,11 +1,15 @@
+import { resolve } from "node:path";
 import { gzipSync } from "node:zlib";
 
 // All sizes are cold, deduplicated JS + CSS, gzipped locally. Follow static
 // imports; a lazy route or game belongs only to the visit that requests it.
-export function routeBudgets() {
+export function routeBudgets(appRoot) {
   return {
     name: "brightboost-route-budgets",
-    apply: "build",
+    // Other production builds (e.g. the analytics host fixture) also reuse the
+    // Vite config. Only the application root contains the routes measured here.
+    apply: (config, { command }) =>
+      command === "build" && resolve(config.root ?? ".") === appRoot,
     enforce: "post",
     generateBundle: {
       order: "post",

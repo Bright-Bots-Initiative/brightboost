@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { useAccountLinkToken } from "../lib/useAccountLinkToken";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import GameBackground from "../components/GameBackground";
@@ -11,8 +12,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
 
 const ResetPassword: React.FC = () => {
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token") || "";
+  const token = useAccountLinkToken();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

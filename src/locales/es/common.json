@@ -2576,7 +2576,7 @@
     "familiar": "Tus clases, creaciones y navegación siguen en su lugar.",
     "comingTitle": "Tus próximos descubrimientos están creciendo.",
     "comingDescription": "Estamos creando nuevos juegos para esta especialidad. Puedes volver a tus juegos y creaciones anteriores.",
-    "play": "Explorar las Islas de Adaptación",
+    "play": "Jugar a {{title}}",
     "revisit": "Volver a mis juegos",
     "fieldNote": "Una pregunta para llevar contigo",
     "setsComplete": "Fundamentos, Exploración y Dominio: completos",
@@ -2597,6 +2597,14 @@
     "resetPreview": "Explorar otra especialidad",
     "previewLocked": "Mostrar estado bloqueado",
     "previewBack": "Volver a las especialidades",
+    "qubitCove": {
+      "title": "Cala Cúbit",
+      "tagline": "Salta de isla en isla y mide un cúbit. ¿Verás un 0 o un 1?",
+      "tag1": "Explorar",
+      "tag2": "Saltar",
+      "tag3": "Medir",
+      "gameLocked": "Cala Cúbit se abre después del Set 3 al elegir Cuántica. Ver mi especialidad."
+    },
     "tracks": {
       "AI": {
         "name": "IA / AA",
@@ -2616,9 +2624,9 @@
         "verbs": "Preguntar · Experimentar · Descubrir",
         "companion": "Guía cuántico",
         "previewTitle": "Un mundo de posibilidades",
-        "preview": "Tonos violetas, una insignia de átomo y preguntas para experimentar dan vida a tu mundo cuántico.",
+        "preview": "Visita Cala Cúbit. Salta entre islas y mide un cúbit para ver un 0 o un 1.",
         "welcome": "Tu viaje cuántico comienza.",
-        "question": "¿Qué podría revelar un experimento que tus ojos no pueden ver?"
+        "question": "¿Verás el mismo resultado cada vez que midas?"
       },
       "BIOTECH": {
         "name": "Biotecnología",
@@ -3160,19 +3168,20 @@
   "home": {
     "meta": {
       "title": "Bright Boost — Un mundo que construyes al aprender",
-      "description": "Explora los juegos STEM de Bright Boost. Prueba una misión gratuita de robótica y descubre por dónde empezar con tu clase o familia.",
+      "description": "Juega a Cala Cúbit, una aventura cuántica gratuita de Bright Boost para kínder a 2.º grado. Explora las islas y descubre más juegos STEM para tu clase o familia.",
       "imageAlt": "La mascota de Bright Boost junto al lema en inglés A world you build by learning."
     },
     "eyebrow": "Plataforma de aprendizaje STEM gratuita",
     "displayLine": "Juega. Construye. Conviértete.",
     "h1": "Un mundo que construyes al aprender.",
-    "heroSentence": "Programa a Bolt en una misión de robótica. Elige entre retos para kínder a 2.º grado o para 3.º a 5.º grado.",
+    "heroSentence": "Salta por las islas de Cala Cúbit y descubre qué pasa cuando mides un cúbit.",
     "secondaryCta": "Para maestros y familias",
     "howItWorks": {
       "summary": "Cómo funciona la demostración",
-      "point1": "Tres laberintos cortos, aquí mismo en esta página.",
+      "point1": "Prepara y mide un cúbit en cada baliza. ¿Qué números pueden salir?",
       "point2": "Sin cuenta y sin registro.",
-      "point3": "Funciona en el teléfono."
+      "point3": "Funciona en el teléfono.",
+      "tankTrek": "Dale instrucciones a Bolt y observa adónde lo llevan."
     },
     "demo": {
       "loading": "Cargando el juego…",
@@ -3181,15 +3190,15 @@
       "retry": "Reintentar",
       "fullScreen": "Abrir en pantalla completa",
       "openFull": "Abrir la demostración en pantalla completa",
-      "completeTitle": "¡Terminaste los tres laberintos!",
+      "completeTitle": "¡Terminaste Tank Trek!",
       "starsLabel": "Estrellas ganadas:",
       "playAgain": "Jugar otra vez",
       "adultsLabel": "Para adultos",
       "teacherLink": "Para maestros",
       "familyLink": "Para familias",
-      "bandLabel": "Elige la edad de la misión",
-      "bandK2": "Kínder–2.º grado",
-      "bandG35": "3.º–5.º grado",
+      "bandLabel": "Elige un juego",
+      "bandK2": "Cala Cúbit · K–2",
+      "bandG35": "Tank Trek · 3.º–5.º",
       "metaTitle": "Prueba Bright Boost — juego STEM gratis, sin registro",
       "metaDescription": "Juega una misión de robótica de Bright Boost para K–2 o grados 3–5. No necesitas una cuenta.",
       "staysLocal": "Juega sin dar tu nombre ni crear una cuenta. Enviamos cuántas veces juegas y tus puntos a PostHog, que nos ayuda a contar.",
@@ -3217,7 +3226,7 @@
       }
     },
     "adults": {
-      "intro": "Los adultos tienen su propia entrada. Los niños nunca se registran por su cuenta.",
+      "intro": "Los docentes y las familias crean las cuentas de kínder a 8.º. Los estudiantes pueden entrar con un código de clase.",
       "teacherTitle": "Maestros",
       "familyTitle": "Familias",
       "plansTitle": "Planes de acceso gratuitos",
@@ -3242,7 +3251,8 @@
       "g68Description": "Próximamente",
       "available": "Disponible",
       "coming": "Próximamente"
-    }
+    },
+    "tankTrekHeroSentence": "Guía a Bolt por los laberintos de Tank Trek. Planea una ruta y ejecuta tu código."
   },
   "publicChrome": {
     "fromNonprofit": "Desde Bright Bots Initiative",
@@ -3274,5 +3284,86 @@
       "cloudflare": "Cloudflare Web Analytics recibe la URL de la página, un identificador de carga y mediciones de rendimiento, como tiempos de carga, cambios de diseño, selectores de elementos y uso de memoria del navegador.",
       "requests": "Las solicitudes a estos proveedores también incluyen información de conexión, como tu dirección IP y las cabeceras de solicitud del navegador."
     }
+  },
+  "signupSelection": {
+    "title": "Crear una cuenta",
+    "subtitle": "Los docentes y las familias pueden añadir estudiantes a una clase o a un grupo familiar.",
+    "teacherCard": {
+      "heading": "Soy docente",
+      "blurb": "Lleva el aprendizaje STEM de kínder a 8.º a tu aula.",
+      "cta": "Registrarme como docente"
+    },
+    "parentCard": {
+      "heading": "Soy madre, padre o tutor",
+      "blurb": "Crea un grupo familiar y aprende con tu hijo o hija.",
+      "cta": "Registrarme para aprender en casa"
+    },
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "logIn": "Iniciar sesión",
+    "classCodeNote": "Estudiantes, usen el código que les dio su docente o su familia.",
+    "classCodeLink": "Entrar con un código de clase"
+  },
+  "qubitCove": {
+    "title": "Cala Cúbit",
+    "goal": "Enciende las tres luces para despertar al faro.",
+    "canvas": "Islas para explorar en Cala Cúbit",
+    "lights": "Luces encendidas: {{count}} de 3",
+    "sparks": "Chispas: {{count}}",
+    "map": "Mapa de las islas",
+    "mapHint": "Elige una luz para viajar hasta ella.",
+    "names": {
+      "zero": "Jardín Cero",
+      "one": "Pico Uno",
+      "mix": "Puerto Sorpresa"
+    },
+    "visit": "Viajar a {{name}}",
+    "lit": "Encendida",
+    "unlit": "Apagada",
+    "controls": "Controles del juego",
+    "up": "Ir arriba",
+    "down": "Ir abajo",
+    "left": "Ir a la izquierda",
+    "right": "Ir a la derecha",
+    "jump": "Saltar",
+    "keyboard": "Muévete con las flechas o con WASD. Pulsa la barra espaciadora para saltar y E para usar una luz.",
+    "use": "Usar la luz",
+    "close": "Cerrar",
+    "setup": {
+      "zero": "Prepara tu cúbit en 0.",
+      "one": "Prepara tu cúbit en 1.",
+      "mix": "Dale la misma oportunidad al 0 y al 1. Prueba tres veces. Usa un cúbit nuevo cada vez."
+    },
+    "prepare": "Preparar cúbit",
+    "prepareAgain": "Preparar un cúbit nuevo",
+    "measure": "Medir",
+    "ready": "¡Ya puedes medir!",
+    "readings": "Tus resultados",
+    "prediction": "¿Qué números pueden salir si lo preparas así?",
+    "choices": {
+      "zero": "Solo 0",
+      "one": "Solo 1",
+      "mix": "0 o 1"
+    },
+    "retry": "Fíjate en cómo preparaste el cúbit. ¡Inténtalo otra vez!",
+    "insight": {
+      "zero": "Si lo preparas en 0, sale 0.",
+      "one": "Si lo preparas en 1, sale 1.",
+      "mix": "Puede salir cualquiera de los dos. Hasta puede repetirse el mismo número."
+    },
+    "beaconLit": "¡Se encendió la luz de {{name}}!",
+    "explore": "Volver a la cala",
+    "won": "¡El faro está brillando!",
+    "replay": "Volver a jugar",
+    "finish": "Terminar la aventura",
+    "saveError": "No se pudo guardar tu progreso. Vuelve a pulsar «Terminar la aventura».",
+    "help": "Cómo jugar",
+    "reduced": "Reducir movimiento",
+    "reading": "¡Salió {{value}}!",
+    "litAlready": "Ya encendiste esta luz.",
+    "touch": "Mantén pulsadas las flechas para moverte. Toca Saltar para dar un salto. Abre el mapa de las islas para viajar.",
+    "saved": "Aventura completada",
+    "listen": "Escuchar",
+    "aboutQubits": "Una computadora cuántica usa cúbits. Aquí, al medir un cúbit, ves un solo número: 0 o 1.",
+    "cometJump": "Sigue en movimiento y salta otra vez al tocar el suelo. ¡Así harás un salto cometa más alto!"
   }
 }

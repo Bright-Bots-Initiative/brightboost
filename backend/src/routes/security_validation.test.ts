@@ -55,10 +55,10 @@ describe("Security Validation", () => {
       prismaMock.user.create.mockResolvedValue({
         id: "new-user",
         email: "student@test.com", // Expected stored value
-        role: "student",
+        role: "teacher",
       });
 
-      const response = await request(app).post("/api/signup/student").send({
+      const response = await request(app).post("/api/signup/teacher").send({
         name: "Test User",
         email: "Student@Test.com", // Mixed case input
         password: "Password123",

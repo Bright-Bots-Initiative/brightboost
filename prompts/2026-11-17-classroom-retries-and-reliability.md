@@ -10,3 +10,5 @@
 - #888: Claim a specialty and grant its abilities in one transaction, including for a first-time avatar.
 
 Regression coverage exercises the games, the built dependency graph, and actual session and selection routes against disposable PostgreSQL.
+
+**Follow-up, 2026-11-24:** Resolve the conflicts with main while preserving Qubit Cove as the featured game from #971. Keep the grades 3–5 Tank Trek option and its shared links, and verify which game each public entry actually loads.

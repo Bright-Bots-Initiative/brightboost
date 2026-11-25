@@ -1,6 +1,7 @@
 import { lazy, type ComponentType } from "react";
 import type { GameResult } from "./shared/GameShell";
 const BioTrailActivity = lazy(() => import("./BioTrailActivity"));
+const QubitCoveActivity = lazy(() => import("./QubitCoveActivity"));
 const SparBotsActivity = lazy(() => import("./SparBotsActivity"));
 
 // Lazy-loaded game components
@@ -48,7 +49,8 @@ export const GAME_COMPONENTS: Record<string, ComponentType<GameProps>> = {
   fast_lane: FastLaneGame, // "Fast Lane Signals" (Set 2)
   qualify_tune_race: QualifyTuneRaceGame, // "Qualify, Tune, Race" (Set 2)
 
-  // Advanced Biotech: independently gated by server specialty state.
+  // Advanced games are independently gated by server specialty state.
+  qubit_cove: QubitCoveActivity,
   biotrail: BioTrailActivity,
   sparbots: SparBotsActivity,
 

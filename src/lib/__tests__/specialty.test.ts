@@ -3,6 +3,7 @@ import {
   parseSpecialtyStatus,
   BIOTRAIL_SLUG,
   SPARBOTS_SLUG,
+  QUBIT_COVE_SLUG,
 } from "../specialty";
 import { canAccessModule, resolveModuleAccess } from "../moduleAccess";
 describe("Advanced specialty policy", () => {
@@ -30,6 +31,14 @@ describe("Advanced specialty policy", () => {
     );
     for (const archetype of [null, "BIOTECH", "QUANTUM", "unknown"]) {
       expect(canAccessModule({ slug: SPARBOTS_SLUG, archetype })).toBe(false);
+    }
+  });
+  it("opens Qubit Cove only for Quantum", () => {
+    expect(
+      canAccessModule({ slug: QUBIT_COVE_SLUG, archetype: "QUANTUM" }),
+    ).toBe(true);
+    for (const archetype of [null, "AI", "BIOTECH", "unknown"]) {
+      expect(canAccessModule({ slug: QUBIT_COVE_SLUG, archetype })).toBe(false);
     }
   });
   it("rejects incomplete or malformed server state instead of granting access", () => {

@@ -175,48 +175,45 @@
   padding-bottom: 0.75rem;
 }
 
-/* ---------------------------------------------------------------------------
- * The playable panel (`src/components/home/PublicDemo.tsx`).
- *
- * The box is reserved before the game chunk arrives, so the loading state, the
- * failure state, the briefing and the completion card all occupy the same
- * height and nothing below the hero moves while the page settles. The minimum
- * is measured from the briefing card itself at each width, not guessed.
- *
- * The panel is a raised sky surface, which is what makes the game's own white
- * cards read as objects sitting on something rather than as more page.
- * ------------------------------------------------------------------------- */
+/* Reserve the featured game's canvas and controls until its lazy chunk arrives.
+ * The containing grid cell supplies the width for these canvas aspect ratios. */
 .bb-public .bb-public-demo {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  /* Measured on this build at 320px, where the briefing wraps hardest. */
-  min-height: 900px;
-  padding: 0.75rem;
+  min-height: calc(52.6cqw + 16.25rem);
+  padding: 1rem;
   border: 1px solid var(--bb-color-border);
   border-radius: var(--bb-radius-lg);
   background: var(--bb-color-surface-raised);
   box-shadow: 0 10px 30px rgba(22, 36, 58, 0.12);
 }
 
-/* 360-639px: measured 824px at 390px. */
-@media (min-width: 360px) {
+@media (min-width: 1024px) {
   .bb-public .bb-public-demo {
-    min-height: 820px;
+    min-height: calc(52.6cqw + 19rem);
   }
 }
 
-/* 640px and up: measured 834px at 768px, 1280px and 1440px. */
-@media (min-width: 640px) {
+@media (max-width: 660px) {
   .bb-public .bb-public-demo {
-    min-height: 830px;
-    padding: 1rem;
+    min-height: calc(70cqw + 18rem);
+    padding: 0.5rem;
   }
 }
 
-/* The reservation is for the wait, not for the life of the panel: once the
- * game has rendered (`data-ready`), the panel is as tall as what it holds, so
- * the completion card does not float in half a screen of empty box. */
+@media (max-width: 520px) {
+  .bb-public .bb-public-demo {
+    min-height: calc(89cqw + 19rem);
+  }
+  .bb-public-demo .qc-game {
+    margin-inline: 0;
+  }
+  .bb-public-demo .qc-tools .qc-help-button {
+    flex-shrink: 0;
+  }
+}
+
 .bb-public .bb-public-demo[data-ready="true"] {
   min-height: 0;
 }
@@ -329,8 +326,8 @@
   white-space: nowrap;
 }
 .bb-demo-bands {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   justify-content: center;
   padding: 0.5rem;
