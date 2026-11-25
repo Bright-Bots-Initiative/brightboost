@@ -7,6 +7,7 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { ApiError } from "@/services/api";
 import TeacherClasses from "@/pages/TeacherClasses";
 
 const api = vi.hoisted(() => ({
@@ -40,6 +41,20 @@ function mount() {
 beforeEach(() => vi.resetAllMocks());
 
 describe("truthful class-list loading (#899)", () => {
+  it("explains a protected class and keeps it in the list", async () => {
+    api.get.mockResolvedValue([course()]);
+    api.delete.mockRejectedValue(
+      new ApiError("class_has_learning_records", 409),
+    );
+    mount();
+    await screen.findByText("Room 3");
+    fireEvent.click(screen.getByTitle("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "records were kept",
+    );
+    expect(screen.getByText("Room 3")).toBeVisible();
+  });
   it("shows the create-first state only after a successful empty response", async () => {
     api.get.mockResolvedValue([]);
     mount();

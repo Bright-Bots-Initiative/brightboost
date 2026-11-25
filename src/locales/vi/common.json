@@ -2523,5 +2523,49 @@
     "listen": "Nghe đọc",
     "aboutQubits": "Máy tính lượng tử dùng qubit. Ở đây, mỗi khi đo một qubit, em sẽ thấy một số: 0 hoặc 1.",
     "cometJump": "Tiếp tục di chuyển và nhảy thêm lần nữa ngay khi chạm đất. Em sẽ bật cao hơn với cú nhảy sao chổi!"
+  },
+  "classroom": {
+    "plan": "Giao mô-đun cho lớp",
+    "order": "Thứ tự chơi",
+    "catalog": "Có thể giao cho lớp này",
+    "loading": "Đang tải mô-đun của lớp…",
+    "loadFailed": "Không thể cập nhật danh sách mô-đun. Hãy thử lại.",
+    "retry": "Thử lại",
+    "none": "Chưa có mô-đun nào được giao.",
+    "noMore": "Không còn mô-đun có thể chơi cho nhóm lớp này.",
+    "up": "Đưa {{title}} lên",
+    "down": "Đưa {{title}} xuống",
+    "remove": "Bỏ {{title}}",
+    "assign": "Giao {{title}}",
+    "studentTitle": "Bài được giao trong lớp",
+    "unavailable": "Không thể tải bài được giao trong lớp.",
+    "notReady": "Chưa thể chơi",
+    "deleteProtected": "Lớp này có kết quả đánh giá hoặc sản phẩm của học sinh. Lớp và hồ sơ đã được giữ lại.",
+    "deleteFailed": "Không thể xóa lớp. Hãy thử lại."
+  },
+  "raceLab": {
+    "intro": "Thử đường đua có nhiều cọc hơn. Chạy hai vòng trên cùng đường, đổi một nâng cấp và so sánh số lần va chạm.",
+    "question": "Vòng 1: {{first}} lần va chạm. Vòng 2: {{second}}. Kết quả nói gì về vòng 2?",
+    "fewer": "Ít va chạm hơn",
+    "same": "Số lần va chạm bằng nhau",
+    "more": "Nhiều va chạm hơn",
+    "explain": "So sánh {{first}} với {{second}}: {{comparison}}."
+  },
+  "narration": {
+    "controls": "Đọc hướng dẫn thành tiếng",
+    "listen": "Nghe",
+    "pause": "Tạm dừng",
+    "resume": "Tiếp tục",
+    "repeat": "Đọc lại từ đầu",
+    "stop": "Dừng",
+    "unavailable": "Thiết bị này không có âm thanh cho ngôn ngữ này. Bạn vẫn có thể đọc hướng dẫn.",
+    "instructions": {
+      "bounce": "Nhìn gợi ý. Hướng bóng vào cổng phù hợp.",
+      "gears": "Nhìn gợi ý. Hứng bánh răng phù hợp.",
+      "rhyme": "Tìm từ có vần giống nhau. Di chuyển vào làn có từ đó.",
+      "tank": "Chọn một bước cho rô-bốt. Nhấn Chạy để thử đường đi.",
+      "quantum": "Nhìn bài toán. Chạm vào đáp án bạn cho là đúng.",
+      "choice": "Chọn một đáp án. Bạn có thể chạm hoặc dùng bàn phím."
+    }
   }
 }

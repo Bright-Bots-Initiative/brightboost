@@ -36,6 +36,7 @@ vi.mock("@/services/api", () => ({
     getModule: vi.fn(),
     getProgress: vi.fn(),
     getStudentCourses: vi.fn(),
+    getStudentAssignedModules: vi.fn(),
     getStudentAssignments: vi.fn(),
   },
   useApi: () => authApi,
@@ -88,6 +89,7 @@ function structureFor(slug: string, title: string) {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(api.getStudentAssignedModules).mockResolvedValue([]);
   __resetGradeBandCache();
   localStorage.clear();
   navigate.mockClear();

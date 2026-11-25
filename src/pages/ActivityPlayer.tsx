@@ -1,4 +1,5 @@
 // src/pages/ActivityPlayer.tsx
+import { K2InstructionPilot } from "@/components/activities/InstructionPilot";
 import {
   Suspense,
   useEffect,
@@ -834,15 +835,22 @@ export default function ActivityPlayer() {
 
     if (quizVariant === "instant") {
       return (
-        <K2InstantFeedbackQuiz
-          title={activity.title}
-          questions={questions}
-          shuffleMap={shuffleMap}
-          onComplete={(score) =>
-            handleComplete({ score, total: questions.length })
+        <K2InstructionPilot.Provider
+          key={activity.id}
+          value={
+            gradeBand === "k2" && import.meta.env.VITE_K2_READ_ALOUD === "true"
           }
-          trackContext={{ moduleSlug: slug, activityId, gradeBand }}
-        />
+        >
+          <K2InstantFeedbackQuiz
+            title={activity.title}
+            questions={questions}
+            shuffleMap={shuffleMap}
+            onComplete={(score) =>
+              handleComplete({ score, total: questions.length })
+            }
+            trackContext={{ moduleSlug: slug, activityId, gradeBand }}
+          />
+        </K2InstructionPilot.Provider>
       );
     }
 
@@ -876,7 +884,15 @@ export default function ActivityPlayer() {
       return (
         <div className="p-6">
           <Suspense fallback={<LoadingScreen />}>
-            <RegistryGame config={gameConfig} onComplete={handleComplete} />
+            <K2InstructionPilot.Provider
+              key={activity.id}
+              value={
+                gradeBand === "k2" &&
+                import.meta.env.VITE_K2_READ_ALOUD === "true"
+              }
+            >
+              <RegistryGame config={gameConfig} onComplete={handleComplete} />
+            </K2InstructionPilot.Provider>
           </Suspense>
         </div>
       );

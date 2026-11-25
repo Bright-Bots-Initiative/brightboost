@@ -3365,5 +3365,49 @@
     "listen": "Escuchar",
     "aboutQubits": "Una computadora cuántica usa cúbits. Aquí, al medir un cúbit, ves un solo número: 0 o 1.",
     "cometJump": "Sigue en movimiento y salta otra vez al tocar el suelo. ¡Así harás un salto cometa más alto!"
+  },
+  "classroom": {
+    "plan": "Asignar módulos a la clase",
+    "order": "Orden de juego",
+    "catalog": "Disponibles para esta clase",
+    "loading": "Cargando los módulos de la clase…",
+    "loadFailed": "No se pudo actualizar la lista de módulos. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "none": "Aún no hay módulos asignados.",
+    "noMore": "No hay más módulos jugables para este grupo de grados.",
+    "up": "Subir {{title}}",
+    "down": "Bajar {{title}}",
+    "remove": "Quitar {{title}}",
+    "assign": "Asignar {{title}}",
+    "studentTitle": "Módulos de mi clase",
+    "unavailable": "No se pudieron cargar los módulos de tu clase.",
+    "notReady": "Aún no se puede jugar",
+    "deleteProtected": "Esta clase tiene resultados de evaluación o creaciones de estudiantes. Se conservaron la clase y sus registros.",
+    "deleteFailed": "No se pudo eliminar esta clase. Inténtalo de nuevo."
+  },
+  "raceLab": {
+    "intro": "Prueba un eslalon con más conos. Da dos vueltas al mismo circuito, cambia una mejora y compara el número de choques.",
+    "question": "Vuelta 1: {{first}} choques. Vuelta 2: {{second}}. ¿Qué muestran los resultados de la segunda vuelta?",
+    "fewer": "Menos choques",
+    "same": "El mismo número de choques",
+    "more": "Más choques",
+    "explain": "Compara {{first}} con {{second}}: {{comparison}}."
+  },
+  "narration": {
+    "controls": "Leer las instrucciones en voz alta",
+    "listen": "Escuchar",
+    "pause": "Pausar",
+    "resume": "Continuar",
+    "repeat": "Repetir desde el principio",
+    "stop": "Detener",
+    "unavailable": "El audio no está disponible en este idioma en este dispositivo. Puedes usar las instrucciones escritas.",
+    "instructions": {
+      "bounce": "Mira la pista. Apunta la pelota a la puerta que corresponde.",
+      "gears": "Mira la pista. Atrapa el engranaje que corresponde.",
+      "rhyme": "Busca la palabra que rima. Muévete a su carril.",
+      "tank": "Elige un movimiento para tu robot. Pulsa Ejecutar para probar el camino.",
+      "quantum": "Mira el problema de matemáticas. Toca la respuesta que creas correcta.",
+      "choice": "Elige una respuesta. Puedes tocarla o usar el teclado."
+    }
   }
 }

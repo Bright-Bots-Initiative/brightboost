@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useAuth } from "../contexts/AuthContext";
+import ClassModules from "@/components/StudentDashboard/ClassModules";
 import XPProgressWidget from "@/components/StudentDashboard/XPProgress";
 import {
   Lock,
@@ -96,7 +97,7 @@ export default function StudentDashboard() {
   ]);
 
   const [avatar, setAvatar] = useState<any>(null);
-  const [, setModules] = useState<any[]>([]);
+  const [allowedModules, setModules] = useState<any[]>([]);
   const [progressList, setProgressList] = useState<any[]>([]);
   const [upNext, setUpNext] = useState<NextActivity[]>([]);
   const [nextOne, setNextOne] = useState<NextActivity | null>(null);
@@ -638,6 +639,13 @@ export default function StudentDashboard() {
           </Card>
         </div>
       </section>
+
+      {!loading && !loadError && (
+        <ClassModules
+          key={sessionKey}
+          allowed={new Set(allowedModules.map((m) => m.slug))}
+        />
+      )}
 
       {/* Assigned Sessions (Pilot Mode) */}
       {assignedSessions.length > 0 && (

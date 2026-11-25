@@ -1,3 +1,5 @@
+> **Canonical for:** grade-band module catalog and class assignments. Last verified against code: 2026-11-24.
+
 # Upper-Elementary MVP — Grade 3-5 Expansion
 
 ## Architecture Summary
@@ -41,17 +43,18 @@ ClassModuleAssignment (NEW)
 
 ### Module Families Seeded
 
-| Family Key | Title | Canonical Set 1 Anchor | G3-5 Variant |
-|------------|-------|------------------------|--------------|
-| bounce_buds | Biotech Foundations | Bounce & Buds | Data Dash: Sort & Discover |
-| gotcha_gears | Logic & Decision Systems | Gotcha Gears | Variable Quest: Fair Test Lab |
-| rhyme_ride | Language + Pattern Systems | Rhyme & Ride | Motion Mission: Force Lab |
-| tank_trek | Robotics & Path Planning | Tank Trek | Design Under Pressure: Bridge Lab |
-| quantum_quest | Quantum Foundations | Quantum Quest | Quantum Mission: Pattern Lab |
+| Family key      | Catalog family           | Playable foundation game (both bands) | Upper-elementary lab                        |
+| --------------- | ------------------------ | ------------------------------------- | ------------------------------------------- |
+| sorting         | Sorting & Classification | Bounce & Buds                         | Data Dash: Sort & Discover (playable)       |
+| plant_variables | Plants & Fair Tests      | Gotcha Gears                          | Variable Quest: Fair Test Lab (planned)     |
+| motion          | Forces & Motion          | Rhyme & Ride                          | Motion Mission: Force Lab (planned)         |
+| bridge          | Engineering & Design     | Tank Trek                             | Design Under Pressure: Bridge Lab (planned) |
+| quantum_quest   | Quantum Foundations      | Quantum Quest                         | Quantum Mission: Pattern Lab (planned)      |
 
 ### G3-5 Content Config Shape
 
-Each g3_5 variant stores a `contentConfig` JSON with:
+Each lab specification stores a `contentConfig` JSON with:
+
 - `theme` — UI tone (lab, blueprint, dashboard, mission)
 - `reading` — word count target, topic, vocabulary list
 - `questions` — count, question types
@@ -61,42 +64,49 @@ Each g3_5 variant stores a `contentConfig` JSON with:
 
 ## API Routes
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/module-catalog/families` | any | List all module families with their variants |
-| GET | `/api/module-catalog/variants?band=g3_5` | any | List variants filtered by band |
-| PUT | `/api/teacher/courses/:id/band` | teacher | Update class grade band |
-| GET | `/api/teacher/courses/:id/module-assignments` | teacher | List assignments for a class |
-| POST | `/api/teacher/courses/:id/module-assignments` | teacher | Assign a variant to a class |
-| PUT | `/api/teacher/courses/:id/module-assignments/:aid` | teacher | Update assignment (order, lock, due) |
-| DELETE | `/api/teacher/courses/:id/module-assignments/:aid` | teacher | Remove assignment |
-| GET | `/api/student/assigned-modules` | student | Get modules from all enrolled classes |
+| Method | Path                                                    | Auth    | Description                                  |
+| ------ | ------------------------------------------------------- | ------- | -------------------------------------------- |
+| GET    | `/api/module-catalog/families`                          | any     | List all module families with their variants |
+| GET    | `/api/module-catalog/variants?band=g3_5`                | any     | List variants filtered by band               |
+| PUT    | `/api/teacher/courses/:id/band`                         | teacher | Update class grade band                      |
+| GET    | `/api/teacher/courses/:id/module-assignments`           | teacher | List assignments for a class                 |
+| POST   | `/api/teacher/courses/:id/module-assignments`           | teacher | Assign a variant to a class                  |
+| PUT    | `/api/teacher/courses/:id/module-assignments/:aid`      | teacher | Update assignment (order, lock, due)         |
+| DELETE | `/api/teacher/courses/:id/module-assignments/:aid`      | teacher | Remove assignment                            |
+| POST   | `/api/teacher/courses/:id/module-assignments/:aid/move` | teacher | Move an item up or down atomically           |
+| GET    | `/api/student/assigned-modules`                         | student | Get modules from all enrolled classes        |
 
 ## Assignment / Access Rules
 
 1. A class has exactly one `gradeBand` (default: `k2`)
-2. Only variants matching the class band can be assigned
+2. Only active variants linked to a published module and matching the class band can be assigned
 3. Students see modules from all enrolled classes, grouped by class
 4. Locked assignments (`isLocked: true`) are hidden from students
 5. K-2 students continue to see the existing flat module list unchanged
-6. The new assigned-modules endpoint is additive — existing Modules.tsx continues working
+6. The assigned panel links only to modules available to that learner in the regular catalog.
+7. A teacher can delete a class with unused benchmark assignments. A class with any benchmark attempt or student creation, including a private draft, is kept with its records; the teacher sees why.
 
 ## Key Files Changed
 
 ### Schema
+
 - `prisma/schema.prisma` — added `gradeBand` to Course, added ModuleFamily, ModuleVariant, ClassModuleAssignment
 
 ### Backend
+
 - `backend/src/routes/moduleCatalog.ts` — new route file (catalog + assignment CRUD)
 - `backend/src/routes/courses.ts` — accept/return `gradeBand` in create/detail
 - `backend/src/server.ts` — mount moduleCatalog router
 
 ### Frontend
-- `src/services/api.ts` — 7 new API methods for catalog, band, and assignments
-- `src/pages/TeacherClassDetail.tsx` — grade band selector dropdown
-- `src/locales/en/common.json` — band label keys
+
+- `src/services/api.ts` — catalog, grade-band and assignment API calls
+- `src/components/teacher/ClassModulePlanner.tsx` — class detail assignment controls
+- `src/components/StudentDashboard/ClassModules.tsx` — enrolled learner’s assignments
+- `src/locales/{en,es,vi,zh-CN}/common.json` — classroom and grade-band labels
 
 ### Seed
+
 - `prisma/seed.cjs` — module families, k2+g3_5 variants, demo g3_5 class with auto-assignments
 
 ## How to Seed / Test
@@ -105,11 +115,8 @@ Each g3_5 variant stores a `contentConfig` JSON with:
 # Generate Prisma client after schema changes
 npx prisma generate
 
-# Create migration (if using migrations)
-npx prisma migrate dev --name upper-elementary-mvp
-
-# Or push schema directly (dev)
-npx prisma db push
+# Apply the checked-in migrations to the local development database
+npx prisma migrate deploy
 
 # Seed data
 npx prisma db seed
@@ -117,7 +124,7 @@ npx prisma db seed
 # Verify:
 # 1. Log in as teacher → go to a class → see grade band dropdown
 # 2. Switch class to "Grades 3-5"
-# 3. API: GET /api/module-catalog/variants?band=g3_5 → 5 variants
+# 3. Open Assign class modules: five adaptive games and Data Dash on a fully seeded database
 # 4. API: POST assignment → verify band validation
 # 5. Log in as student enrolled in g3_5 class → GET /api/student/assigned-modules
 ```
@@ -130,8 +137,8 @@ npx prisma db seed
 - Grade 3-5 adaptation planning mirrors the canonical 5-game Set 1 families above.
 - The grade-band infrastructure is implemented and seed-ready.
 - **First playable G3-5 module is now live:** `Data Dash: Sort & Discover` (`g35-data-dash-sort-discover`) as a concrete Module → Unit → Lesson → Activity experience.
-- Other G3-5 variants remain planning-only configs in `ModuleVariant.contentConfig` and are not yet playable React games.
-- Variant-native teacher assignment UI and full assigned-modules player flow remain future work.
+- The four remaining upper-elementary labs are planning-only configs in `ModuleVariant.contentConfig` and are not yet playable React games.
+- In class detail, open **Assign class modules** to add, remove or move a playable module. The student dashboard groups **Class assignments** by class in teacher order. A module opens through existing grade, release and specialty gates. The five adaptive foundation games have distinct grade 3–5 assignments; Data Dash also links to its own published module. Config-only labs are not offered.
 
 ## Localization Coverage Note
 
@@ -142,10 +149,8 @@ npx prisma db seed
 ## Known Follow-Up Items
 
 1. **Remaining G3-5 game implementations** — Four variants are still planning/config-only and need playable React game components (Variable Quest, Motion Mission, Design Under Pressure, Quantum Mission). Data Dash is now playable as the first concrete G3-5 module.
-2. **Module assignment UI** — Teacher-facing UI for browsing catalog and assigning/reordering modules. Currently only the band selector is in the UI; assignment management is API-ready but needs a dedicated component.
-3. **Student assigned-modules view** — A student dashboard section that shows class-assigned modules. Currently the `/api/student/assigned-modules` endpoint exists but no frontend component consumes it.
-4. **Per-grade tuning** — The `g3_5` band is one shared profile. Future work: separate g3, g4, g5 difficulty curves.
-5. **Student-level band override** — Currently band is class-level only. A future `studentBandOverride` field could allow individual differentiation.
-6. **Feature flag** — No flag system exists yet. The g3_5 infrastructure is live but safe — no content renders until game components are built and modules are assigned by a teacher.
-7. **Analytics events** — Track `module_assigned`, `module_started`, `module_completed` with band and family metadata.
-8. **Progress per variant** — Currently progress tracks by activityId. Variant-aware progress would enable comparing performance across bands.
+2. **Per-grade tuning** — The `g3_5` band is one shared profile. Future work: separate g3, g4, g5 difficulty curves.
+3. **Student-level band override** — Currently band is class-level only. A future `studentBandOverride` field could allow individual differentiation.
+4. **More playable labs** — Config-only variants need a published module before teachers can assign them.
+5. **Analytics events** — Track `module_assigned`, `module_started`, `module_completed` with band and family metadata.
+6. **Progress per variant** — Currently progress tracks by activityId. Variant-aware progress would enable comparing performance across bands.

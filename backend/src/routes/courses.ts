@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import prisma from "../utils/prisma";
 import { requireAuth, requireRole } from "../utils/auth";
@@ -336,16 +337,49 @@ router.delete(
     // below) AFTER it holds that row's Enrollment. Never add a
     // HomeAccessInvite write before `enrollment.deleteMany` here — that would
     // create a lock cycle with acceptance.
-    await prisma.$transaction([
-      prisma.pulseResponse.deleteMany({ where: { courseId: course.id } }),
-      prisma.enrollment.deleteMany({ where: { courseId: course.id } }),
-      prisma.assignment.deleteMany({ where: { courseId: course.id } }),
-      prisma.course.delete({ where: { id: course.id } }),
-      prisma.homeAccessInvite.updateMany({
-        where: { courseId: course.id, usedAt: null, revokedAt: null },
-        data: { revokedAt: new Date() },
-      }),
-    ]);
+    try {
+      await prisma.$transaction([
+        prisma.pulseResponse.deleteMany({ where: { courseId: course.id } }),
+        prisma.enrollment.deleteMany({ where: { courseId: course.id } }),
+        prisma.assignment.deleteMany({ where: { courseId: course.id } }),
+        // Attempts and creations have restrictive FKs. They protect concurrent
+        // submissions as well as existing work; on conflict everything rolls back.
+        prisma.benchmarkAssignment.deleteMany({
+          where: { courseId: course.id, attempts: { none: {} } },
+        }),
+        prisma.course.delete({
+          where: { id: course.id, teacherId: req.user!.id },
+        }),
+        prisma.homeAccessInvite.updateMany({
+          where: { courseId: course.id, usedAt: null, revokedAt: null },
+          data: { revokedAt: new Date() },
+        }),
+      ]);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2003") {
+          const evidence = await prisma.course.findFirst({
+            where: {
+              id: course.id,
+              teacherId: req.user!.id,
+              OR: [
+                { creations: { some: {} } },
+                { benchmarkAssignments: { some: { attempts: { some: {} } } } },
+              ],
+            },
+            select: { id: true },
+          });
+          return res.status(409).json({
+            error: evidence
+              ? "class_has_learning_records"
+              : "class_changed_retry",
+          });
+        }
+        if (error.code === "P2025")
+          return res.status(404).json({ error: "Course not found" });
+      }
+      throw error; // express-async-errors forwards unexpected failures to the shared handler.
+    }
 
     res.json({ message: "Course deleted" });
   },

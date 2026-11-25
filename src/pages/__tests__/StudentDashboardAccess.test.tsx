@@ -35,6 +35,7 @@ vi.mock("@/services/api", () => ({
     getModule: vi.fn(),
     getProgress: vi.fn(),
     getStudentCourses: vi.fn(),
+    getStudentAssignedModules: vi.fn(),
     getStudentAssignments: vi.fn(),
   },
   useApi: () => authApi,
@@ -122,6 +123,7 @@ function renderDashboard() {
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(api.getStudentAssignedModules).mockResolvedValue([]);
   __resetGradeBandCache();
   localStorage.clear();
   vi.mocked(api.getAvatar).mockResolvedValue({ level: 1, xp: 0 });

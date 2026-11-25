@@ -27,6 +27,7 @@ import {
   Flame,
   Check,
 } from "lucide-react";
+import { PilotInstruction } from "@/components/activities/InstructionPilot";
 import ActivityHeader from "@/components/activities/ActivityHeader";
 import { usePersonalBest } from "@/hooks/usePersonalBest";
 import { ReducedEffectsToggle } from "./ReducedEffectsToggle";
@@ -617,6 +618,7 @@ export default function GameShell({
                 className="max-w-xl mx-auto text-left"
               />
             )}
+            <PilotInstruction surface={gameKey} />
             {briefing.tips && briefing.tips.length > 0 && (
               <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 text-left max-w-sm mx-auto border border-white/50 shadow-sm">
                 <h3 className="font-bold text-slate-700 text-sm mb-2 flex items-center gap-1">

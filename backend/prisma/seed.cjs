@@ -3303,6 +3303,7 @@ async function main() {
         },
         g3_5: {
           title: "Data Dash: Sort & Discover",
+          moduleSlug: "g35-data-dash-sort-discover",
           subtitle: "Classify data and find hidden patterns!",
           contentConfig: {
             theme: "dashboard",
@@ -3470,6 +3471,25 @@ async function main() {
         },
       });
 
+      // These shipped games change difficulty for grades 3–5. Keep them
+      // distinct from the proposed lab variants, which have no playable slug.
+      await prisma.moduleVariant.upsert({
+        where: {
+          familyId_band_version: {
+            familyId: family.id,
+            band: "g3_5",
+            version: "playable-1",
+          },
+        },
+        create: {
+          familyId: family.id,
+          band: "g3_5",
+          version: "playable-1",
+          ...fd.k2,
+        },
+        update: { ...fd.k2 },
+      });
+
       // G3-5 variant (new upper-elementary content)
       await prisma.moduleVariant.upsert({
         where: {
@@ -3486,11 +3506,13 @@ async function main() {
           title: fd.g3_5.title,
           subtitle: fd.g3_5.subtitle,
           status: "active",
+          moduleSlug: fd.g3_5.moduleSlug,
           contentConfig: fd.g3_5.contentConfig,
         },
         update: {
           title: fd.g3_5.title,
           subtitle: fd.g3_5.subtitle,
+          moduleSlug: fd.g3_5.moduleSlug,
           contentConfig: fd.g3_5.contentConfig,
         },
       });
@@ -3511,9 +3533,10 @@ async function main() {
     });
     console.log("Seeded demo g3_5 class:", demoClass.name);
 
-    // Auto-assign all g3_5 variants to the demo class
+    // Assign only playable variants to the demo class.
     const g35Variants = await prisma.moduleVariant.findMany({
-      where: { band: "g3_5", status: "active" },
+      where: { band: "g3_5", status: "active", moduleSlug: { not: null } },
+      orderBy: [{ title: "asc" }, { id: "asc" }],
     });
     for (let i = 0; i < g35Variants.length; i++) {
       await prisma.classModuleAssignment.upsert({
