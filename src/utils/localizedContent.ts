@@ -7,6 +7,11 @@ import i18n from "../i18n";
  */
 const CONTENT_NAMES: Record<string, Record<string, string>> = {
   es: {
+    "The Great Work": "La Gran Obra",
+    "Build a machine, change one move, and save what you made.":
+      "Construye una máquina, cambia un movimiento y guarda tu creación.",
+    "The Machine Workshop": "El taller de máquinas",
+    "My First Machine": "Mi primera máquina",
     "Qubit Cove": "Cala Cúbit",
     "Explore islands and measure a qubit to see a 0 or a 1.":
       "Explora las islas y mide un cúbit para ver un 0 o un 1.",
@@ -54,6 +59,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Set 2: Qualify, Tune, Race": "Set 2: Califica, Ajusta, Compite",
   },
   vi: {
+    "The Great Work": "Công trình lớn",
+    "Build a machine, change one move, and save what you made.":
+      "Lắp một cỗ máy, đổi một bước và lưu lại sản phẩm của em.",
+    "The Machine Workshop": "Xưởng máy",
+    "My First Machine": "Cỗ máy đầu tiên của em",
     "Qubit Cove": "Vịnh Qubit",
     "Explore islands and measure a qubit to see a 0 or a 1.":
       "Khám phá các hòn đảo và đo một qubit để thấy số 0 hoặc số 1.",
@@ -86,6 +96,11 @@ const CONTENT_NAMES: Record<string, Record<string, string>> = {
     "Set 2: Qualify, Tune, Race": "Bộ 2: Thử, Điều Chỉnh, Đua",
   },
   "zh-CN": {
+    "The Great Work": "伟大的作品",
+    "Build a machine, change one move, and save what you made.":
+      "搭建一台机器，改变一个动作，再保存你的作品。",
+    "The Machine Workshop": "机器工坊",
+    "My First Machine": "我的第一台机器",
     "Qubit Cove": "量子比特湾",
     "Explore islands and measure a qubit to see a 0 or a 1.":
       "探索小岛，测量一个量子比特，看看结果是 0 还是 1。",

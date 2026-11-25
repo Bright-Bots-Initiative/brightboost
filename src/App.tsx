@@ -73,6 +73,7 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const HomeAccessAccept = lazy(() => import("./pages/HomeAccessAccept"));
 const ForReviewers = lazy(() => import("./pages/ForReviewers"));
 const TryDemo = lazy(() => import("./pages/TryDemo"));
+const GreatWorkDemo = lazy(() => import("./pages/GreatWorkDemo"));
 const Waterworks = lazy(() => import("./pages/Waterworks"));
 // Biome Buddy prototype: unlisted routes, lazy so its content tables never
 // ride in the main chunk.
@@ -233,6 +234,7 @@ function App() {
                   lever from docs/audits/k8-engagement-audit.md Part 3.
                   Must stay outside any auth-gated layout. */}
               <Route path="/try" element={<TryDemo />} />
+              <Route path="/try/great-work" element={<GreatWorkDemo />} />
               {/* 都江堰水利工坊 · Waterworks — standalone showcase. Public, no
                   auth, deliberately linked from NOTHING (direct URL only);
                   device-local persistence, zero backend. Placement (#676)

@@ -3,6 +3,13 @@ import prisma from "../utils/prisma";
 import type { Avatar, Prisma } from "@prisma/client";
 
 // XP constants
+// Creation-first studio completions count toward Set 3, independently of avatar rewards.
+export const rewardedCompletions = (studentId: string) => ({
+  studentId,
+  status: "COMPLETED" as const,
+  activityId: { not: "great-work" },
+});
+
 export const XP_PER_ACTIVITY = 50;
 export const XP_PER_LEVEL_UP = 100;
 
@@ -37,7 +44,7 @@ export async function checkUnlocks(
   // ⚡ Bolt Optimization: Use preloaded avatar if available to save a query
   const queries: [Promise<number>, Promise<Avatar | null>?] = [
     db.progress.count({
-      where: { studentId, status: "COMPLETED" },
+      where: rewardedCompletions(studentId),
     }),
   ];
 
@@ -142,7 +149,7 @@ export async function ensureAvatarWithBackfill(
 
   // No avatar exists - count completed progress and backfill
   const completedCount = await prisma.progress.count({
-    where: { studentId, status: "COMPLETED" },
+    where: rewardedCompletions(studentId),
   });
 
   // Calculate backfilled XP

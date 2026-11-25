@@ -14,6 +14,7 @@ const {
 let prisma = null;
 
 const { seedAdvanced } = require("./seedAdvanced.cjs");
+const { seedGreatWork } = require("./seedGreatWork.cjs");
 
 async function main() {
   // 0. Environment gate (#700) — refuse production targets BEFORE any write.
@@ -4157,6 +4158,7 @@ async function main() {
     select: { id: true },
   });
   if (curriculumOwner) await seedAdvanced(prisma, curriculumOwner.id);
+  await seedGreatWork(prisma, teacher.id);
 }
 
 main()

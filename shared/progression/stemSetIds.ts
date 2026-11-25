@@ -61,14 +61,13 @@ export type StemSet2GameId = (typeof STEM_SET_2_IDS)[number];
  * reach them to complete them. Ungating is a separate, deliberate edit.
  */
 export const STEM_SET_3_PLACEHOLDER_IDS = [
-  "set3-game-2",
   "set3-game-4",
   "set3-game-5",
 ] as const;
 
 export const STEM_SET_3_IDS = [
   "track-maker",
-  "set3-game-2",
+  "great-work",
   "echo-avenue",
   "set3-game-4",
   "set3-game-5",

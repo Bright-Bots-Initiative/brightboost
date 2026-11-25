@@ -1,5 +1,5 @@
 > Canonical for: the #721 controlled builder interface and integration decisions.
-> Last verified against code: 2026-11-06. Repository-integrated review candidate; catalogue release and independent approval remain separate.
+> Last verified against code: 2026-11-24.
 
 # The Great Work — build surface
 
@@ -7,6 +7,12 @@
 `GreatWorkBuilder` and its props. #724 supplies the program/target and owns Studio.
 #722 owns saving and verification; #725 owns gallery access. This component imports
 no API, owns no Creation state, and submits no academic result or XP.
+
+## Play the Creator Studio
+
+The guest route is `/try/great-work`. Choose **Run** to watch the starter arm move water. Open the first lesson to change an instruction. Save the machine, reload the page, and open it from **My Shelf**. Duplicate creates a separate machine. The demo shelf belongs to the current browser.
+
+With the Set 3 curriculum seeded, eligible learners can open **The Great Work** through their modules. The student shelf uses the enrolled course and authenticated student. The server replays each submitted design using the shared engine. Generated names use curated English and Spanish word pools. Vietnamese and Chinese use the English naming fallback for this release.
 
 ## Contract
 

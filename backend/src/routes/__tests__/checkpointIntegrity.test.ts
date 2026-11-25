@@ -19,6 +19,7 @@ import { STEM_SET_3_PLACEHOLDER_IDS } from "@brightboost/greatwork-engine/dist/p
  */
 
 const prismaMock = vi.hoisted(() => ({
+  creation: { findFirst: vi.fn() },
   user: { findUnique: vi.fn() },
   progress: {
     findUnique: vi.fn(),
@@ -67,6 +68,7 @@ vi.mock("../../services/analytics", () => ({
 }));
 
 import app from "../../server";
+import { starterStudioDraft } from "@brightboost/greatwork-engine";
 
 /** The Activity → Lesson → Unit → Module chain as `resolveActivityForWrite` loads it. */
 const chain = (slug: string, lessonId = "lesson-1") => ({
@@ -331,5 +333,100 @@ describe("#876 — POST /progress/complete-activity validates the curriculum cha
     });
     const res = await complete({ result: { score: 2, total: 3 } });
     expect(res.status).toBe(200);
+  });
+});
+
+describe("finishing a saved Great Work machine", () => {
+  const slug = "k2-stem-great-work";
+  const id = "18e695d1-2cc4-4f2b-99fa-7aa8596d4bda";
+  const finish = (revision: number) =>
+    complete({
+      moduleSlug: slug,
+      activityId: "great-work",
+      result: {
+        gameKey: "great_work",
+        greatWorkSave: { id, revision },
+        score: 9999,
+      },
+    });
+  function machine(count: number) {
+    return {
+      id,
+      courseId: "class",
+      updatedAt: new Date(),
+      content: {
+        ...starterStudioDraft("en"),
+        revision: 2,
+        parentCreationId: null,
+        lastRun: {
+          solved: false,
+          cycles: 20,
+          cost: 10,
+          area: 3,
+          instructions: 3,
+          produced: [{ canonical: "block", count, firstTick: 2 }],
+          mirrored: false,
+          engineVersion: "test",
+          verifiedAt: new Date().toISOString(),
+        },
+      },
+    };
+  }
+  beforeEach(() => {
+    armHappyCompletion();
+    prismaMock.activity.findUnique.mockResolvedValue({
+      ...ACTIVITY,
+      id: "great-work",
+      content: '{"gameKey":"great_work"}',
+      ...chain(slug),
+    });
+  });
+
+  it("marks a verified author's working revision complete without granting XP or accepting the posted score", async () => {
+    prismaMock.creation.findFirst.mockResolvedValue(machine(1));
+    const res = await finish(2);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({
+      studioSaved: true,
+      reward: { xpDelta: 0 },
+    });
+    expect(prismaMock.creation.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id,
+          type: "great_work_machine",
+          authorId: "student-123",
+          course: { enrollments: { some: { studentId: "student-123" } } },
+        },
+      }),
+    );
+    expect(prismaMock.progress.updateMany).toHaveBeenCalledWith({
+      where: {
+        studentId: "student-123",
+        activityId: "great-work",
+        status: "IN_PROGRESS",
+      },
+      data: { status: "COMPLETED", timeSpentS: { increment: 10 } },
+    });
+    expect(prismaMock.avatar.update).not.toHaveBeenCalled();
+    expect(prismaMock.gamePersonalBest.create).not.toHaveBeenCalled();
+  });
+  it.each([
+    ["missing", null, 2],
+    ["unfinished", machine(0), 2],
+    ["stale", machine(1), 1],
+  ] as const)(
+    "refuses a %s revision without changing progress",
+    async (_case, row, revision) => {
+      prismaMock.creation.findFirst.mockResolvedValue(row);
+      const res = await finish(revision);
+      expect(res.status).toBe(409);
+      expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
+    },
+  );
+  it("requires the saved version even when no result was posted", async () => {
+    const res = await complete({ moduleSlug: slug, activityId: "great-work" });
+    expect(res.status).toBe(400);
+    expect(prismaMock.progress.createMany).not.toHaveBeenCalled();
   });
 });

@@ -28,7 +28,12 @@ const SEED_FILES = [
 ];
 
 function seededActivityIds(seedPath: string): Set<string> {
-  const source = readFileSync(seedPath, "utf8");
+  const source = [
+    seedPath,
+    path.join(path.dirname(seedPath), "seedGreatWork.cjs"),
+  ]
+    .map((file) => readFileSync(file, "utf8"))
+    .join("\n");
   const ids = new Set<string>();
   const pattern = /activityId:\s*"([^"]+)"/g;
   let match: RegExpExecArray | null;

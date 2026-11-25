@@ -7,6 +7,7 @@ import { sensitiveOpsLimiter } from "../utils/security";
 import {
   ensureAvatarWithBackfill,
   XP_PER_ACTIVITY,
+  rewardedCompletions,
   XP_PER_LEVEL_UP,
 } from "../services/game";
 // STEM Set 3 activity IDs — must all be completed before specialization.
@@ -89,7 +90,7 @@ router.get("/avatar/me", requireAuth, async (req, res) => {
     } else if (avatar.xp === 0) {
       // Avatar exists but xp=0 - check if we need to "repair" from progress
       const completedCount = await prisma.progress.count({
-        where: { studentId, status: "COMPLETED" },
+        where: rewardedCompletions(studentId),
       });
 
       if (completedCount > 0) {

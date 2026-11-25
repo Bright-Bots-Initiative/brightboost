@@ -374,6 +374,7 @@ export default function ActivityPlayer() {
   };
 
   const handleComplete = async (result?: {
+    greatWorkSave?: { id: string; revision: number };
     gameKey?: string;
     score?: number;
     total?: number;
@@ -472,7 +473,11 @@ export default function ActivityPlayer() {
 
             <div className="space-y-4 py-4">
               <div className="flex flex-col items-center gap-2">
-                {isReplay ? (
+                {completionData.studioSaved ? (
+                  <p className="text-lg font-semibold">
+                    {t("games.greatWork.classroom.saved")}
+                  </p>
+                ) : isReplay ? (
                   <div className="text-2xl font-black text-brightboost-navy">
                     {t("activityPlayer.alreadyCounted")}
                   </div>

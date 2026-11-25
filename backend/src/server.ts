@@ -30,6 +30,7 @@ import feedbackRouter from "./routes/feedback";
 import benchmarkRouter from "./routes/benchmarks";
 import homeAccessRouter from "./routes/homeAccess";
 import creationsRouter from "./routes/creations";
+import greatWorkMachinesRouter from "./routes/greatWorkMachines";
 import experimentsRouter from "./routes/experiments";
 import adminMetricsRouter from "./routes/adminMetrics";
 import { devRoleShim, authenticateToken } from "./utils/auth";
@@ -211,6 +212,7 @@ app.use("/api", feedbackRouter);
 app.use("/api", benchmarkRouter);
 app.use("/api", homeAccessRouter);
 app.use("/api", creationsRouter);
+app.use("/api/great-work/machines", greatWorkMachinesRouter);
 app.use("/api", experimentsRouter);
 app.use("/api", adminMetricsRouter);
 
